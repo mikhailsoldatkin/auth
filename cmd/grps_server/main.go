@@ -26,15 +26,13 @@ type server struct {
 }
 
 // Create handles the creation of a new user in the system.
-func (s *server) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateResponse, error) {
-	_ = ctx
+func (s *server) Create(_ context.Context, req *pb.CreateRequest) (*pb.CreateResponse, error) {
 	my_logger.Info("create request received: %v", req)
 	return &pb.CreateResponse{Id: 1}, nil
 }
 
 // Get retrieves user data by ID.
-func (s *server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	_ = ctx
+func (s *server) Get(_ context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	my_logger.Info("get request received: %v", req)
 	now := time.Now()
 
@@ -51,8 +49,7 @@ func (s *server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, 
 }
 
 // Update modifies user data.
-func (s *server) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Empty, error) {
-	_ = ctx
+func (s *server) Update(_ context.Context, req *pb.UpdateRequest) (*emptypb.Empty, error) {
 	my_logger.Info("update request received: %v", req)
 	return &emptypb.Empty{}, nil
 }
@@ -65,7 +62,6 @@ func (s *server) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Em
 }
 
 func main() {
-
 	lis, err := net.Listen("tcp", fmt.Sprintf("%v:%d", host, grpcPort))
 	if err != nil {
 		my_logger.Fatal("failed to listen: %v", err)
