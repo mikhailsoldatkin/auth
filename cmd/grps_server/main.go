@@ -3,19 +3,23 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/fatih/color"
+	"net"
+	"time"
+
+	"github.com/mikhailsoldatkin/auth/internal/my_logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"log"
-	"net"
-	"time"
 
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 )
 
-const grpcPort = 50051
+const (
+	grpcPort   = 50051
+	host       = "localhost"
+	serverName = "auth"
+)
 
 type server struct {
 	pb.UnimplementedUserV1Server
@@ -23,13 +27,15 @@ type server struct {
 
 // Create handles the creation of a new user in the system.
 func (s *server) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateResponse, error) {
-	log.Printf(color.GreenString("create request received: %v", req))
+	_ = ctx
+	my_logger.Info("create request received: %v", req)
 	return &pb.CreateResponse{Id: 1}, nil
 }
 
 // Get retrieves user data by ID.
 func (s *server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	log.Printf(color.GreenString("get request received: %v", req))
+	_ = ctx
+	my_logger.Info("get request received: %v", req)
 	now := time.Now()
 
 	return &pb.GetResponse{
@@ -46,30 +52,32 @@ func (s *server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, 
 
 // Update modifies user data.
 func (s *server) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Empty, error) {
-	log.Printf(color.GreenString("update request received: %v", req))
+	_ = ctx
+	my_logger.Info("update request received: %v", req)
 	return &emptypb.Empty{}, nil
 }
 
 // Delete removes a user by ID.
 func (s *server) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Empty, error) {
-	log.Printf(color.GreenString("delete request received: %v", req))
+	_ = ctx
+	my_logger.Info("delete request received: %v", req)
 	return &emptypb.Empty{}, nil
 }
 
 func main() {
 
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", grpcPort))
+	lis, err := net.Listen("tcp", fmt.Sprintf("%v:%d", host, grpcPort))
 	if err != nil {
-		log.Fatalf(color.RedString("failed to listen: %v", err))
+		my_logger.Fatal("failed to listen: %v", err)
 	}
 
 	s := grpc.NewServer()
 	reflection.Register(s)
 	pb.RegisterUserV1Server(s, &server{})
 
-	log.Printf(color.GreenString("server listening at %v", lis.Addr()))
+	my_logger.Info("%v server listening at %v", serverName, lis.Addr())
 
 	if err = s.Serve(lis); err != nil {
-		log.Fatalf(color.RedString("failed to serve: %v", err))
+		my_logger.Fatal("failed to serve: %v", err)
 	}
 }
