@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// DatabaseConfig represents the configuration for the database.
 type DatabaseConfig struct {
 	PostgresDB       string `env:"POSTGRES_DB" env-required:"true"`
 	PostgresUser     string `env:"POSTGRES_USER" env-required:"true"`
@@ -18,17 +19,19 @@ type DatabaseConfig struct {
 	PostgresDSN      string `env:"-"`
 }
 
+// GRPCConfig represents the configuration for the gRPC server.
 type GRPCConfig struct {
 	GRPCPort int    `env:"GRPC_PORT" env-required:"true"`
 	GRPCHost string `env:"GRPC_HOST" env-required:"true"`
 }
 
+// Config represents the overall application configuration.
 type Config struct {
 	Database DatabaseConfig
 	GRPC     GRPCConfig
 }
 
-// MustLoad reads app config from .env file
+// MustLoad reads application configuration from .env file
 func MustLoad() *Config {
 	envPath := "./.env"
 

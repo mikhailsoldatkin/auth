@@ -1,0 +1,38 @@
+services:
+
+  server:
+    image: ${DOCKER_USERNAME}/${DOCKER_SERVER_IMAGE}:latest
+    container_name: server
+    ports:
+      - ${GRPC_PORT}:${GRPC_PORT}
+    networks:
+      - auth_network
+    env_file:
+      - .env
+
+  db:
+    image: postgres:16.3-alpine3.20
+    container_name: ${DB_HOST}
+    ports:
+      - ${DB_PORT}:5432
+    networks:
+      - auth_network
+    env_file:
+      - .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: always
+
+  migrator:
+    image: ${DOCKER_USERNAME}/${DOCKER_MIGRATOR_IMAGE}:latest
+    container_name: migrator
+    networks:
+      - auth_network
+    restart: on-failure
+
+networks:
+  auth_network:
+    driver: bridge
+
+volumes:
+  pgdata:

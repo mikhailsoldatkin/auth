@@ -1,4 +1,4 @@
-FROM alpine:3.20
+FROM alpine:latest
 
 RUN apk update && \
     apk upgrade && \
@@ -8,9 +8,9 @@ RUN apk update && \
 ADD https://github.com/pressly/goose/releases/download/v3.21.1/goose_linux_x86_64 /bin/goose
 RUN chmod +x /bin/goose
 
-WORKDIR /root
+WORKDIR /app
 
-COPY migrations/*.sql migrations/
+COPY migrations/*.sql ./migrations/
 COPY migrate.sh .
 COPY .env .
 

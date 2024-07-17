@@ -21,7 +21,6 @@ RUN apk update && \
 WORKDIR /app
 
 COPY --from=builder /app/auth_server .
-
 COPY .env .
 
 CMD ["./auth_server"]
