@@ -5,8 +5,6 @@ services:
     container_name: server
     ports:
       - ${GRPC_PORT}:${GRPC_PORT}
-    networks:
-      - auth_network
     env_file:
       - .env
 
@@ -15,8 +13,6 @@ services:
     container_name: ${DB_HOST}
     ports:
       - ${DB_PORT}:5432
-    networks:
-      - auth_network
     env_file:
       - .env
     volumes:
@@ -26,13 +22,7 @@ services:
   migrator:
     image: ${DOCKER_USERNAME}/${DOCKER_MIGRATOR_IMAGE}:latest
     container_name: migrator
-    networks:
-      - auth_network
     restart: on-failure
-
-networks:
-  auth_network:
-    driver: bridge
 
 volumes:
   pgdata:

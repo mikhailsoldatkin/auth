@@ -16,7 +16,6 @@ env:
   COMPOSE_FILE: docker-compose-prod.yaml
   DB_HOST: db
   MIGRATIONS_DIR: ./migrations
-  GRPC_HOST: 0.0.0.0
   GO_VERSION: 1.22
 
 jobs:
@@ -72,7 +71,6 @@ jobs:
           echo DB_HOST=${{ env.DB_HOST }} >> .env
           echo MIGRATIONS_DIR=${{ env.MIGRATIONS_DIR }} >> .env
           echo GRPC_PORT=${{ secrets.GRPC_PORT }} >> .env
-          echo GRPC_HOST=${{ env.GRPC_HOST }} >> .env
           echo DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }} >> .env
           echo DOCKER_SERVER_IMAGE=${{ env.DOCKER_SERVER_IMAGE }} >> .env
           echo DOCKER_MIGRATOR_IMAGE=${{ env.DOCKER_MIGRATOR_IMAGE }} >> .env

@@ -21,8 +21,7 @@ type DatabaseConfig struct {
 
 // GRPCConfig represents the configuration for the gRPC server.
 type GRPCConfig struct {
-	GRPCPort int    `env:"GRPC_PORT" env-required:"true"`
-	GRPCHost string `env:"GRPC_HOST" env-required:"true"`
+	GRPCPort int `env:"GRPC_PORT" env-required:"true"`
 }
 
 // Config represents the overall application configuration.

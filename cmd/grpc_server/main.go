@@ -59,7 +59,7 @@ func (s *server) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Em
 func main() {
 	cfg := config.MustLoad()
 
-	lis, err := net.Listen("tcp", fmt.Sprintf("%v:%d", cfg.GRPC.GRPCHost, cfg.GRPC.GRPCPort))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GRPC.GRPCPort))
 	if err != nil {
 		logger.Fatal("failed to listen: %v", err)
 	}
