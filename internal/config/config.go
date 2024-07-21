@@ -26,6 +26,7 @@ type GRPCConfig struct {
 
 // Config represents the overall application configuration.
 type Config struct {
+	AppName  string `env:"APP_NAME" env-required:"true"`
 	Database DatabaseConfig
 	GRPC     GRPCConfig
 }
