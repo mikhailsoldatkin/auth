@@ -15,6 +15,7 @@ env:
   DOCKER_MIGRATOR_IMAGE: auth_migrator
   COMPOSE_FILE: docker-compose-prod.yaml
   DB_HOST: db
+  DB_PORT: 5432
   MIGRATIONS_DIR: ./migrations
   GO_VERSION: 1.22
 
@@ -67,7 +68,7 @@ jobs:
           echo POSTGRES_DB=${{ secrets.POSTGRES_DB }} >> .env
           echo POSTGRES_USER=${{ secrets.POSTGRES_USER }} >> .env
           echo POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} >> .env
-          echo DB_PORT=${{ secrets.DB_PORT }} >> .env
+          echo DB_PORT=${{ env.DB_PORT }} >> .env
           echo DB_HOST=${{ env.DB_HOST }} >> .env
           echo MIGRATIONS_DIR=${{ env.MIGRATIONS_DIR }} >> .env
           echo GRPC_PORT=${{ secrets.GRPC_PORT }} >> .env
