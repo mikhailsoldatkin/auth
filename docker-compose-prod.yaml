@@ -1,8 +1,8 @@
 services:
 
-  server:
-    image: ${DOCKER_USERNAME}/${DOCKER_SERVER_IMAGE}:latest
-    container_name: server
+  app:
+    image: ${DOCKER_USERNAME}/${APP_NAME}:latest
+    container_name: ${APP_NAME}
     ports:
       - ${GRPC_PORT}:${GRPC_PORT}
     env_file:
@@ -22,8 +22,8 @@ services:
     restart: always
 
   migrator:
-    image: ${DOCKER_USERNAME}/${DOCKER_MIGRATOR_IMAGE}:latest
-    container_name: migrator
+    image: ${DOCKER_USERNAME}/${MIGRATOR_NAME}:latest
+    container_name: ${MIGRATOR_NAME}
     restart: on-failure
 
 volumes:

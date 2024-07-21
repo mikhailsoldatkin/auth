@@ -1,9 +1,9 @@
 services:
 
-  server:
+  app:
     build:
       context: .
-    container_name: server
+    container_name: ${APP_NAME}
     ports:
       - ${GRPC_PORT}:${GRPC_PORT}
     env_file:
@@ -26,7 +26,7 @@ services:
     build:
       context: .
       dockerfile: migrator.Dockerfile
-    container_name: migrator
+    container_name: ${MIGRATOR_NAME}
     restart: on-failure
 
 volumes:

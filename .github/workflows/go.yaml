@@ -11,8 +11,8 @@ on:
       - '**/README.md'
 
 env:
-  DOCKER_SERVER_IMAGE: auth_server
-  DOCKER_MIGRATOR_IMAGE: auth_migrator
+  APP_NAME: auth
+  MIGRATOR_NAME: auth_migrator
   COMPOSE_FILE: docker-compose-prod.yaml
   DB_HOST: db
   DB_PORT: 5432
@@ -73,8 +73,8 @@ jobs:
           echo MIGRATIONS_DIR=${{ env.MIGRATIONS_DIR }} >> .env
           echo GRPC_PORT=${{ secrets.GRPC_PORT }} >> .env
           echo DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }} >> .env
-          echo DOCKER_SERVER_IMAGE=${{ env.DOCKER_SERVER_IMAGE }} >> .env
-          echo DOCKER_MIGRATOR_IMAGE=${{ env.DOCKER_MIGRATOR_IMAGE }} >> .env
+          echo APP_NAME=${{ env.APP_NAME }} >> .env
+          echo MIGRATOR_NAME=${{ env.MIGRATOR_NAME }} >> .env
 
       - name: Upload .env file as artifact
         uses: actions/upload-artifact@v4.3.4
@@ -112,7 +112,7 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_SERVER_IMAGE }}:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/${{ env.APP_NAME }}:latest
 
       - name: Push migrator image to DockerHub
         uses: docker/build-push-action@v6.4.0
@@ -120,7 +120,7 @@ jobs:
           context: .
           file: migrator.Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_MIGRATOR_IMAGE }}:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/${{ env.MIGRATOR_NAME }}:latest
 
   deploy_to_remote_server:
     name: Deploying to remote server
