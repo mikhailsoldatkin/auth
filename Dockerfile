@@ -1,6 +1,6 @@
 FROM golang:1.22 AS builder
 
-WORKDIR /app
+WORKDIR /auth
 
 RUN apt-get update &&  \
     apt-get upgrade -y &&  \
@@ -18,9 +18,9 @@ RUN apk update && \
     apk upgrade && \
     rm -rf /var/cache/apk/*
 
-WORKDIR /app
+WORKDIR /auth
 
-COPY --from=builder /app/auth_server .
+COPY --from=builder /auth/auth_server .
 COPY .env .
 
 CMD ["./auth_server"]
