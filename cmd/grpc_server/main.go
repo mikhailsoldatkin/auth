@@ -56,21 +56,12 @@ func decodePageToken(tokenStr string) (pageToken, error) {
 	return token, nil
 }
 
-// userExists checks if a user with the given ID exists in the database.
-func (s *server) userExists(ctx context.Context, userID int64) (bool, error) {
+// ensureUserExists checks if a user with given ID exists in database and returns an error if it doesn't.
+func (s *server) ensureUserExists(ctx context.Context, userID int64) error {
 	var exists bool
 	err := s.pool.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM users WHERE id=$1)", userID).Scan(&exists)
 	if err != nil {
-		return false, status.Errorf(codes.Internal, "failed to check user existence: %v", err)
-	}
-	return exists, nil
-}
-
-// checkUserExists ensures that a user with the given ID exists in the database.
-func (s *server) checkUserExists(ctx context.Context, userID int64) error {
-	exists, err := s.userExists(ctx, userID)
-	if err != nil {
-		return err
+		return status.Errorf(codes.Internal, "failed to check user existence: %v", err)
 	}
 	if !exists {
 		return status.Errorf(codes.NotFound, "user with ID %d not found", userID)
@@ -143,7 +134,7 @@ func (s *server) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateR
 			"role",
 		).
 		//Values(req.GetName(), req.GetEmail(), req.GetRole().String()).
-		Values(gofakeit.Name(), gofakeit.Email(), "USER").
+		Values(gofakeit.Name(), gofakeit.Email(), req.GetRole().String()).
 		Suffix("RETURNING id")
 
 	query, args, err := builder.ToSql()
@@ -209,7 +200,7 @@ func (s *server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, 
 
 // Update modifies user data.
 func (s *server) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Empty, error) {
-	if err := s.checkUserExists(ctx, req.GetId()); err != nil {
+	if err := s.ensureUserExists(ctx, req.GetId()); err != nil {
 		return nil, err
 	}
 
@@ -261,7 +252,7 @@ func (s *server) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Em
 
 // Delete removes a user by ID.
 func (s *server) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Empty, error) {
-	if err := s.checkUserExists(ctx, req.GetId()); err != nil {
+	if err := s.ensureUserExists(ctx, req.GetId()); err != nil {
 		return nil, err
 	}
 
@@ -279,7 +270,7 @@ func (s *server) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Em
 		return nil, status.Errorf(codes.Internal, "failed to delete user: %v", err)
 	}
 
-	logger.Info("user with ID &d deleted", int(req.GetId()))
+	logger.Info("user with ID %d deleted", int(req.GetId()))
 
 	return &emptypb.Empty{}, nil
 }
