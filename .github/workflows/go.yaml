@@ -75,6 +75,7 @@ jobs:
           echo DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }} >> .env
           echo APP_NAME=${{ env.APP_NAME }} >> .env
           echo MIGRATOR_NAME=${{ env.MIGRATOR_NAME }} >> .env
+          echo DB_HOST_PORT=${{ secrets.DB_HOST_PORT }} >> .env
 
       - name: Upload .env file as artifact
         uses: actions/upload-artifact@v4.3.4
