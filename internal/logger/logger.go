@@ -1,4 +1,4 @@
-// Package logger временное решение для цветных логов
+// Package logger
 package logger
 
 import (

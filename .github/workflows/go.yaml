@@ -14,7 +14,7 @@ env:
   APP_NAME: auth
   MIGRATOR_NAME: auth_migrator
   COMPOSE_FILE: docker-compose-prod.yaml
-  DB_HOST: db
+  DB_HOST: schemas
   DB_PORT: 5432
   MIGRATIONS_DIR: ./migrations
   GO_VERSION: 1.22
