@@ -25,13 +25,13 @@ import (
 )
 
 const (
-	Users     = "users"
-	ID        = "id"
-	Name      = "name"
-	Email     = "email"
-	Role      = "role"
-	CreatedAt = "created_at"
-	UpdatedAt = "updated_at"
+	users     = "users"
+	id        = "id"
+	name      = "name"
+	email     = "email"
+	role      = "role"
+	createdAt = "created_at"
+	updatedAt = "updated_at"
 
 	defaultPageSize = 10
 	emailRegex      = `^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$`
@@ -45,7 +45,7 @@ type server struct {
 // checkUserExists checks if user with given ID exists in database and returns an error if it doesn't.
 func (s *server) checkUserExists(ctx context.Context, userID int64) error {
 	var exists bool
-	query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE id=$1)", Users)
+	query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE id=$1)", users)
 	err := s.pool.QueryRow(ctx, query, userID).Scan(&exists)
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to check user existence: %v", err)
@@ -84,7 +84,7 @@ func (s *server) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateR
 
 	builder := sq.Insert("users").
 		PlaceholderFormat(sq.Dollar).
-		Columns(Name, Email, Role).
+		Columns(name, email, role).
 		Values(gofakeit.Name(), gofakeit.Email(), req.GetRole().String()).
 		Suffix("RETURNING id")
 
@@ -106,9 +106,9 @@ func (s *server) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateR
 
 // Get retrieves user data by ID.
 func (s *server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	builder := sq.Select(ID, Name, Email, Role, CreatedAt, UpdatedAt).
-		From(Users).
-		Where(sq.Eq{ID: req.GetId()}).
+	builder := sq.Select(id, name, email, role, createdAt, updatedAt).
+		From(users).
+		Where(sq.Eq{id: req.GetId()}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builder.ToSql()
@@ -146,28 +146,28 @@ func (s *server) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Em
 	updateFields := make(map[string]any)
 
 	if req.GetName() != nil {
-		updateFields[Name] = req.GetName().GetValue()
+		updateFields[name] = req.GetName().GetValue()
 	}
 	if req.GetEmail() != nil {
 		email := req.GetEmail().GetValue()
 		if !validateEmail(email) {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid email format: %v", email)
 		}
-		updateFields[Email] = email
+		updateFields[email] = email
 	}
 	if req.GetRole().String() != "" {
-		updateFields[Role] = req.GetRole().String()
+		updateFields[role] = req.GetRole().String()
 	}
 
 	if len(updateFields) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "no fields to update")
 	}
 
-	updateFields[UpdatedAt] = time.Now()
+	updateFields[updatedAt] = time.Now()
 
-	builder := sq.Update(Users).
+	builder := sq.Update(users).
 		SetMap(updateFields).
-		Where(sq.Eq{ID: req.GetId()}).
+		Where(sq.Eq{id: req.GetId()}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builder.ToSql()
@@ -187,8 +187,8 @@ func (s *server) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Em
 
 // Delete removes a user by ID.
 func (s *server) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Empty, error) {
-	builder := sq.Delete(Users).
-		Where(sq.Eq{ID: req.GetId()}).
+	builder := sq.Delete(users).
+		Where(sq.Eq{id: req.GetId()}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builder.ToSql()
@@ -215,8 +215,8 @@ func (s *server) List(ctx context.Context, req *pb.ListRequest) (*pb.ListRespons
 	offset := int(req.GetOffset())
 
 	builder := sq.Select("*").
-		From(Users).
-		OrderBy(ID).
+		From(users).
+		OrderBy(id).
 		Limit(uint64(limit)).
 		Offset(uint64(offset)).
 		PlaceholderFormat(sq.Dollar)
