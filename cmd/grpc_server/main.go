@@ -11,7 +11,6 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/brianvoe/gofakeit"
-	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/mikhailsoldatkin/auth/internal/config"
 	"github.com/mikhailsoldatkin/auth/internal/logger"
@@ -24,17 +23,19 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// constants ...
 const (
-	users     = "users"
-	id        = "id"
-	name      = "name"
-	email     = "email"
-	role      = "role"
-	createdAt = "created_at"
-	updatedAt = "updated_at"
+	Users     = "users"
+	ID        = "id"
+	Name      = "name"
+	Email     = "email"
+	Role      = "role"
+	CreatedAt = "created_at"
+	UpdatedAt = "updated_at"
 
-	defaultPageSize = 10
-	emailRegex      = `^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$`
+	DefaultPageSize   = 10
+	EmailRegex        = `^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$`
+	PasswordMinLength = 8
 )
 
 type server struct {
@@ -45,7 +46,7 @@ type server struct {
 // checkUserExists checks if user with given ID exists in database and returns an error if it doesn't.
 func (s *server) checkUserExists(ctx context.Context, userID int64) error {
 	var exists bool
-	query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE id=$1)", users)
+	query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE id=$1)", Users)
 	err := s.pool.QueryRow(ctx, query, userID).Scan(&exists)
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to check user existence: %v", err)
@@ -58,13 +59,13 @@ func (s *server) checkUserExists(ctx context.Context, userID int64) error {
 
 // validateEmail checks if the given email address is in a valid format.
 func validateEmail(email string) bool {
-	re := regexp.MustCompile(emailRegex)
+	re := regexp.MustCompile(EmailRegex)
 	return re.MatchString(email)
 }
 
 // validatePassword provides simple password validation.
 func validatePassword(password, passwordConfirm string) error {
-	if len(password) < 8 {
+	if len(password) < PasswordMinLength {
 		return errors.New("password must be at least 8 characters long")
 	}
 	if password != passwordConfirm {
@@ -82,9 +83,9 @@ func (s *server) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateR
 		return nil, status.Errorf(codes.InvalidArgument, "invalid email format: %v", req.GetEmail())
 	}
 
-	builder := sq.Insert("users").
+	builder := sq.Insert(Users).
 		PlaceholderFormat(sq.Dollar).
-		Columns(name, email, role).
+		Columns(Name, Email, Role).
 		Values(gofakeit.Name(), gofakeit.Email(), req.GetRole().String()).
 		Suffix("RETURNING id")
 
@@ -99,16 +100,22 @@ func (s *server) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateR
 		return nil, status.Errorf(codes.Internal, "failed to create user: %v", err)
 	}
 
-	logger.Info("user with ID %d created", userID)
+	logger.Info("user %d created", userID)
 
 	return &pb.CreateResponse{Id: int64(userID)}, nil
 }
 
 // Get retrieves user data by ID.
 func (s *server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	builder := sq.Select(id, name, email, role, createdAt, updatedAt).
-		From(users).
-		Where(sq.Eq{id: req.GetId()}).
+	userID := req.GetId()
+
+	if err := s.checkUserExists(ctx, userID); err != nil {
+		return nil, err
+	}
+
+	builder := sq.Select(ID, Name, Email, Role, CreatedAt, UpdatedAt).
+		From(Users).
+		Where(sq.Eq{ID: userID}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builder.ToSql()
@@ -122,9 +129,6 @@ func (s *server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, 
 
 	err = s.pool.QueryRow(ctx, query, args...).Scan(&user.Id, &user.Name, &user.Email, &role, &createdAt, &updatedAt)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, status.Errorf(codes.NotFound, "user with ID %d not found", req.GetId())
-		}
 		return nil, status.Errorf(codes.Internal, "failed to retrieve user: %v", err)
 	}
 
@@ -139,35 +143,37 @@ func (s *server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, 
 
 // Update modifies user data.
 func (s *server) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Empty, error) {
-	if err := s.checkUserExists(ctx, req.GetId()); err != nil {
+	userID := req.GetId()
+
+	if err := s.checkUserExists(ctx, userID); err != nil {
 		return nil, err
 	}
 
 	updateFields := make(map[string]any)
 
 	if req.GetName() != nil {
-		updateFields[name] = req.GetName().GetValue()
+		updateFields[Name] = req.GetName().GetValue()
 	}
 	if req.GetEmail() != nil {
 		email := req.GetEmail().GetValue()
 		if !validateEmail(email) {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid email format: %v", email)
 		}
-		updateFields[email] = email
+		updateFields[Email] = email
 	}
 	if req.GetRole().String() != "" {
-		updateFields[role] = req.GetRole().String()
+		updateFields[Role] = req.GetRole().String()
 	}
 
 	if len(updateFields) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "no fields to update")
 	}
 
-	updateFields[updatedAt] = time.Now()
+	updateFields[UpdatedAt] = time.Now()
 
-	builder := sq.Update(users).
+	builder := sq.Update(Users).
 		SetMap(updateFields).
-		Where(sq.Eq{id: req.GetId()}).
+		Where(sq.Eq{ID: userID}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builder.ToSql()
@@ -180,15 +186,17 @@ func (s *server) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Em
 		return nil, status.Errorf(codes.Internal, "failed to update user: %v", err)
 	}
 
-	logger.Info("user with ID &d updated", req.GetId())
+	logger.Info("user %d updated", userID)
 
 	return &emptypb.Empty{}, nil
 }
 
 // Delete removes a user by ID.
 func (s *server) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Empty, error) {
-	builder := sq.Delete(users).
-		Where(sq.Eq{id: req.GetId()}).
+	userID := req.GetId()
+
+	builder := sq.Delete(Users).
+		Where(sq.Eq{ID: userID}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builder.ToSql()
@@ -201,7 +209,7 @@ func (s *server) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Em
 		return nil, status.Errorf(codes.Internal, "failed to delete user: %v", err)
 	}
 
-	logger.Info("user with ID %d deleted", int(req.GetId()))
+	logger.Info("user %d deleted", userID)
 
 	return &emptypb.Empty{}, nil
 }
@@ -210,13 +218,13 @@ func (s *server) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Em
 func (s *server) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
 	limit := int(req.GetLimit())
 	if limit <= 0 {
-		limit = defaultPageSize
+		limit = DefaultPageSize
 	}
 	offset := int(req.GetOffset())
 
 	builder := sq.Select("*").
-		From(users).
-		OrderBy(id).
+		From(Users).
+		OrderBy(ID).
 		Limit(uint64(limit)).
 		Offset(uint64(offset)).
 		PlaceholderFormat(sq.Dollar)
