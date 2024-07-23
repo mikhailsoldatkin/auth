@@ -283,7 +283,7 @@ func main() {
 	reflection.Register(s)
 	pb.RegisterUserV1Server(s, &server{pool: pool})
 
-	logger.Info("%v server listening at %v", cfg.AppName, lis.Addr())
+	logger.Info("%v listening at %v", cfg.AppName, lis.Addr())
 
 	if err = s.Serve(lis); err != nil {
 		logger.Fatal("failed to serve: %v", err)
