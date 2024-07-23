@@ -45,7 +45,7 @@ type server struct {
 // checkUserExists checks if user with given ID exists in database and returns an error if it doesn't.
 func (s *server) checkUserExists(ctx context.Context, userID int64) error {
 	var exists bool
-	query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE id=$1)", tableUsers)
+	query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE %s=$1)", tableUsers, columnID)
 	err := s.pool.QueryRow(ctx, query, userID).Scan(&exists)
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to check user existence: %v", err)
@@ -106,15 +106,13 @@ func (s *server) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateR
 
 // Get retrieves user data by ID.
 func (s *server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	userID := req.GetId()
-
-	if err := s.checkUserExists(ctx, userID); err != nil {
+	if err := s.checkUserExists(ctx, req.GetId()); err != nil {
 		return nil, err
 	}
 
 	builder := sq.Select(columnID, columnName, columnEmail, columnRole, columnCreatedAt, columnUpdatedAt).
 		From(tableUsers).
-		Where(sq.Eq{columnID: userID}).
+		Where(sq.Eq{columnID: req.GetId()}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builder.ToSql()
@@ -142,9 +140,7 @@ func (s *server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, 
 
 // Update modifies user data.
 func (s *server) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Empty, error) {
-	userID := req.GetId()
-
-	if err := s.checkUserExists(ctx, userID); err != nil {
+	if err := s.checkUserExists(ctx, req.GetId()); err != nil {
 		return nil, err
 	}
 
@@ -172,7 +168,7 @@ func (s *server) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Em
 
 	builder := sq.Update(tableUsers).
 		SetMap(updateFields).
-		Where(sq.Eq{columnID: userID}).
+		Where(sq.Eq{columnID: req.GetId()}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builder.ToSql()
@@ -185,17 +181,15 @@ func (s *server) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Em
 		return nil, status.Errorf(codes.Internal, "failed to update user: %v", err)
 	}
 
-	logger.Info("user %d updated", userID)
+	logger.Info("user %d updated", req.GetId())
 
 	return &emptypb.Empty{}, nil
 }
 
 // Delete removes a user by ID.
 func (s *server) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Empty, error) {
-	userID := req.GetId()
-
 	builder := sq.Delete(tableUsers).
-		Where(sq.Eq{columnID: userID}).
+		Where(sq.Eq{columnID: req.GetId()}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builder.ToSql()
@@ -208,7 +202,7 @@ func (s *server) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Em
 		return nil, status.Errorf(codes.Internal, "failed to delete user: %v", err)
 	}
 
-	logger.Info("user %d deleted", userID)
+	logger.Info("user %d deleted", req.GetId())
 
 	return &emptypb.Empty{}, nil
 }
@@ -216,16 +210,16 @@ func (s *server) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Em
 // List lists users with pagination support using limit and offset.
 func (s *server) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
 	limit := int(req.GetLimit())
+	fmt.Println(limit)
 	if limit <= 0 {
 		limit = defaultPageSize
 	}
-	offset := int(req.GetOffset())
 
 	builder := sq.Select("*").
 		From(tableUsers).
 		OrderBy(columnID).
 		Limit(uint64(limit)).
-		Offset(uint64(offset)).
+		Offset(uint64(int(req.GetOffset()))).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builder.ToSql()
