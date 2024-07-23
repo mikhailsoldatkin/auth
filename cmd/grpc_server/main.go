@@ -23,19 +23,18 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-// constants ...
 const (
-	Users     = "users"
-	ID        = "id"
-	Name      = "name"
-	Email     = "email"
-	Role      = "role"
-	CreatedAt = "created_at"
-	UpdatedAt = "updated_at"
+	tableUsers      = "users"
+	columnID        = "id"
+	columnName      = "name"
+	columnEmail     = "email"
+	columnRole      = "role"
+	columnCreatedAt = "created_at"
+	columnUpdatedAt = "updated_at"
 
-	DefaultPageSize   = 10
-	EmailRegex        = `^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$`
-	PasswordMinLength = 8
+	defaultPageSize   = 10
+	emailRegex        = `^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$`
+	passwordMinLength = 8
 )
 
 type server struct {
@@ -46,7 +45,7 @@ type server struct {
 // checkUserExists checks if user with given ID exists in database and returns an error if it doesn't.
 func (s *server) checkUserExists(ctx context.Context, userID int64) error {
 	var exists bool
-	query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE id=$1)", Users)
+	query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE id=$1)", tableUsers)
 	err := s.pool.QueryRow(ctx, query, userID).Scan(&exists)
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to check user existence: %v", err)
@@ -59,13 +58,13 @@ func (s *server) checkUserExists(ctx context.Context, userID int64) error {
 
 // validateEmail checks if the given email address is in a valid format.
 func validateEmail(email string) bool {
-	re := regexp.MustCompile(EmailRegex)
+	re := regexp.MustCompile(emailRegex)
 	return re.MatchString(email)
 }
 
 // validatePassword provides simple password validation.
 func validatePassword(password, passwordConfirm string) error {
-	if len(password) < PasswordMinLength {
+	if len(password) < passwordMinLength {
 		return errors.New("password must be at least 8 characters long")
 	}
 	if password != passwordConfirm {
@@ -83,9 +82,9 @@ func (s *server) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateR
 		return nil, status.Errorf(codes.InvalidArgument, "invalid email format: %v", req.GetEmail())
 	}
 
-	builder := sq.Insert(Users).
+	builder := sq.Insert(tableUsers).
 		PlaceholderFormat(sq.Dollar).
-		Columns(Name, Email, Role).
+		Columns(columnName, columnEmail, columnRole).
 		Values(gofakeit.Name(), gofakeit.Email(), req.GetRole().String()).
 		Suffix("RETURNING id")
 
@@ -113,9 +112,9 @@ func (s *server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, 
 		return nil, err
 	}
 
-	builder := sq.Select(ID, Name, Email, Role, CreatedAt, UpdatedAt).
-		From(Users).
-		Where(sq.Eq{ID: userID}).
+	builder := sq.Select(columnID, columnName, columnEmail, columnRole, columnCreatedAt, columnUpdatedAt).
+		From(tableUsers).
+		Where(sq.Eq{columnID: userID}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builder.ToSql()
@@ -152,28 +151,28 @@ func (s *server) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Em
 	updateFields := make(map[string]any)
 
 	if req.GetName() != nil {
-		updateFields[Name] = req.GetName().GetValue()
+		updateFields[columnName] = req.GetName().GetValue()
 	}
 	if req.GetEmail() != nil {
 		email := req.GetEmail().GetValue()
 		if !validateEmail(email) {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid email format: %v", email)
 		}
-		updateFields[Email] = email
+		updateFields[columnEmail] = email
 	}
 	if req.GetRole().String() != "" {
-		updateFields[Role] = req.GetRole().String()
+		updateFields[columnRole] = req.GetRole().String()
 	}
 
 	if len(updateFields) == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "no fields to update")
 	}
 
-	updateFields[UpdatedAt] = time.Now()
+	updateFields[columnUpdatedAt] = time.Now()
 
-	builder := sq.Update(Users).
+	builder := sq.Update(tableUsers).
 		SetMap(updateFields).
-		Where(sq.Eq{ID: userID}).
+		Where(sq.Eq{columnID: userID}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builder.ToSql()
@@ -195,8 +194,8 @@ func (s *server) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Em
 func (s *server) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Empty, error) {
 	userID := req.GetId()
 
-	builder := sq.Delete(Users).
-		Where(sq.Eq{ID: userID}).
+	builder := sq.Delete(tableUsers).
+		Where(sq.Eq{columnID: userID}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builder.ToSql()
@@ -218,13 +217,13 @@ func (s *server) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Em
 func (s *server) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
 	limit := int(req.GetLimit())
 	if limit <= 0 {
-		limit = DefaultPageSize
+		limit = defaultPageSize
 	}
 	offset := int(req.GetOffset())
 
 	builder := sq.Select("*").
-		From(Users).
-		OrderBy(ID).
+		From(tableUsers).
+		OrderBy(columnID).
 		Limit(uint64(limit)).
 		Offset(uint64(offset)).
 		PlaceholderFormat(sq.Dollar)
