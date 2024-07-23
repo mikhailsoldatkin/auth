@@ -11,6 +11,7 @@ option go_package = "github.com/mikhailsoldatkin/auth;user_v1";
 service UserV1 {
   rpc Create(CreateRequest) returns (CreateResponse);
   rpc Get(GetRequest) returns (GetResponse);
+  rpc List(ListRequest) returns (ListResponse);
   rpc Update(UpdateRequest) returns (google.protobuf.Empty);
   rpc Delete(DeleteRequest) returns (google.protobuf.Empty);
 }
@@ -59,4 +60,13 @@ message UpdateRequest {
 
 message DeleteRequest {
   int64 id = 1;
+}
+
+message ListRequest {
+  int64 limit = 1;
+  int64 offset = 2;
+}
+
+message ListResponse {
+  repeated User users = 1;
 }

@@ -1,5 +1,5 @@
-// Package my_logger временное решение для цветных логов
-package my_logger
+// Package logger ...
+package logger
 
 import (
 	"fmt"
