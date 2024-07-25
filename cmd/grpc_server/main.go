@@ -7,31 +7,20 @@ import (
 	"log"
 	"net"
 	"regexp"
-	"time"
 
-	sq "github.com/Masterminds/squirrel"
-	"github.com/brianvoe/gofakeit"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/mikhailsoldatkin/auth/internal/config"
 	"github.com/mikhailsoldatkin/auth/internal/logger"
+	"github.com/mikhailsoldatkin/auth/internal/repository"
+	userRepo "github.com/mikhailsoldatkin/auth/internal/repository/user"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
-	tableUsers      = "users"
-	columnID        = "id"
-	columnName      = "name"
-	columnEmail     = "email"
-	columnRole      = "role"
-	columnCreatedAt = "created_at"
-	columnUpdatedAt = "updated_at"
-
 	defaultPageSize   = 10
 	emailRegex        = `^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$`
 	passwordMinLength = 8
@@ -39,24 +28,10 @@ const (
 
 type server struct {
 	pb.UnimplementedUserV1Server
-	pool *pgxpool.Pool
+	userRepository repository.UserRepository
 }
 
-// checkUserExists checks if user with given ID exists in database and returns an error if it doesn't.
-func (s *server) checkUserExists(ctx context.Context, userID int64) error {
-	var exists bool
-	query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE %s=$1)", tableUsers, columnID)
-	err := s.pool.QueryRow(ctx, query, userID).Scan(&exists)
-	if err != nil {
-		return status.Errorf(codes.Internal, "failed to check user existence: %v", err)
-	}
-	if !exists {
-		return status.Errorf(codes.NotFound, "user with ID %d not found", userID)
-	}
-	return nil
-}
-
-// validateEmail checks if the given email address is in a valid format.
+// validateEmail checks if the given email address is in valid format.
 func validateEmail(email string) bool {
 	re := regexp.MustCompile(emailRegex)
 	return re.MatchString(email)
@@ -82,181 +57,153 @@ func (s *server) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateR
 		return nil, status.Errorf(codes.InvalidArgument, "invalid email format: %v", req.GetEmail())
 	}
 
-	builder := sq.Insert(tableUsers).
-		PlaceholderFormat(sq.Dollar).
-		Columns(columnName, columnEmail, columnRole).
-		Values(gofakeit.Name(), gofakeit.Email(), req.GetRole().String()).
-		Suffix("RETURNING id")
-
-	query, args, err := builder.ToSql()
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to build query: %v", err)
+	user := &pb.User{
+		Name:  req.Name,
+		Email: req.Email,
+		Role:  req.Role,
 	}
 
-	var userID int
-	err = s.pool.QueryRow(ctx, query, args...).Scan(&userID)
+	id, err := s.userRepository.Create(ctx, user)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to create user: %v", err)
+		return nil, err
 	}
 
-	logger.Info("user %d created", userID)
+	logger.Info("user %d created", id)
 
-	return &pb.CreateResponse{Id: int64(userID)}, nil
+	return &pb.CreateResponse{Id: id}, nil
 }
 
 // Get retrieves user data by ID.
 func (s *server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	if err := s.checkUserExists(ctx, req.GetId()); err != nil {
+	user, err := s.userRepository.Get(ctx, req.GetId())
+	if err != nil {
 		return nil, err
 	}
 
-	builder := sq.Select(columnID, columnName, columnEmail, columnRole, columnCreatedAt, columnUpdatedAt).
-		From(tableUsers).
-		Where(sq.Eq{columnID: req.GetId()}).
-		PlaceholderFormat(sq.Dollar)
+	logger.Info("user data retrieved %v", user)
 
-	query, args, err := builder.ToSql()
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to build query: %v", err)
-	}
-
-	var user pb.User
-	var role string
-	var createdAt, updatedAt time.Time
-
-	err = s.pool.QueryRow(ctx, query, args...).Scan(&user.Id, &user.Name, &user.Email, &role, &createdAt, &updatedAt)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to retrieve user: %v", err)
-	}
-
-	user.Role = pb.Role(pb.Role_value[role])
-	user.CreatedAt = timestamppb.New(createdAt)
-	user.UpdatedAt = timestamppb.New(updatedAt)
-
-	logger.Info("user data retrieved %v", &user)
-
-	return &pb.GetResponse{User: &user}, nil
+	return &pb.GetResponse{User: user}, nil
 }
 
-// Update modifies user data.
-func (s *server) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Empty, error) {
-	if err := s.checkUserExists(ctx, req.GetId()); err != nil {
-		return nil, err
-	}
-
-	updateFields := make(map[string]any)
-
-	if req.GetName() != nil {
-		updateFields[columnName] = req.GetName().GetValue()
-	}
-	if req.GetEmail() != nil {
-		email := req.GetEmail().GetValue()
-		if !validateEmail(email) {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid email format: %v", email)
-		}
-		updateFields[columnEmail] = email
-	}
-	if req.GetRole().String() != "" {
-		updateFields[columnRole] = req.GetRole().String()
-	}
-
-	if len(updateFields) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "no fields to update")
-	}
-
-	updateFields[columnUpdatedAt] = time.Now()
-
-	builder := sq.Update(tableUsers).
-		SetMap(updateFields).
-		Where(sq.Eq{columnID: req.GetId()}).
-		PlaceholderFormat(sq.Dollar)
-
-	query, args, err := builder.ToSql()
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to build update query: %v", err)
-	}
-
-	_, err = s.pool.Exec(ctx, query, args...)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to update user: %v", err)
-	}
-
-	logger.Info("user %d updated", req.GetId())
-
-	return &emptypb.Empty{}, nil
-}
-
-// Delete removes a user by ID.
-func (s *server) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Empty, error) {
-	builder := sq.Delete(tableUsers).
-		Where(sq.Eq{columnID: req.GetId()}).
-		PlaceholderFormat(sq.Dollar)
-
-	query, args, err := builder.ToSql()
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to build delete query: %v", err)
-	}
-
-	_, err = s.pool.Exec(ctx, query, args...)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to delete user: %v", err)
-	}
-
-	logger.Info("user %d deleted", req.GetId())
-
-	return &emptypb.Empty{}, nil
-}
-
-// List lists users with pagination support using limit and offset.
-func (s *server) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
-	limit := int(req.GetLimit())
-	fmt.Println(limit)
-	if limit <= 0 {
-		limit = defaultPageSize
-	}
-
-	builder := sq.Select("*").
-		From(tableUsers).
-		OrderBy(columnID).
-		Limit(uint64(limit)).
-		Offset(uint64(int(req.GetOffset()))).
-		PlaceholderFormat(sq.Dollar)
-
-	query, args, err := builder.ToSql()
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to build query: %v", err)
-	}
-
-	rows, err := s.pool.Query(ctx, query, args...)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to list users: %v", err)
-	}
-	defer rows.Close()
-
-	var users []*pb.User
-	for rows.Next() {
-		var user pb.User
-		var role string
-		var createdAt, updatedAt time.Time
-
-		if err := rows.Scan(&user.Id, &user.Name, &user.Email, &role, &createdAt, &updatedAt); err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to scan user: %v", err)
-		}
-
-		user.Role = pb.Role(pb.Role_value[role])
-		user.CreatedAt = timestamppb.New(createdAt)
-		user.UpdatedAt = timestamppb.New(updatedAt)
-		users = append(users, &user)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, status.Errorf(codes.Internal, "error iterating through rows: %v", err)
-	}
-
-	logger.Info("users fetched")
-
-	return &pb.ListResponse{Users: users}, nil
-}
+//// Update modifies user data.
+//func (s *server) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Empty, error) {
+//	if err := s.checkUserExists(ctx, req.GetId()); err != nil {
+//		return nil, err
+//	}
+//
+//	updateFields := make(map[string]any)
+//
+//	if req.GetName() != nil {
+//		updateFields[columnName] = req.GetName().GetValue()
+//	}
+//	if req.GetEmail() != nil {
+//		email := req.GetEmail().GetValue()
+//		if !validateEmail(email) {
+//			return nil, status.Errorf(codes.InvalidArgument, "invalid email format: %v", email)
+//		}
+//		updateFields[columnEmail] = email
+//	}
+//	if req.GetRole().String() != "" {
+//		updateFields[columnRole] = req.GetRole().String()
+//	}
+//
+//	if len(updateFields) == 0 {
+//		return nil, status.Errorf(codes.InvalidArgument, "no fields to update")
+//	}
+//
+//	updateFields[columnUpdatedAt] = time.Now()
+//
+//	builder := sq.Update(tableUsers).
+//		SetMap(updateFields).
+//		Where(sq.Eq{columnID: req.GetId()}).
+//		PlaceholderFormat(sq.Dollar)
+//
+//	query, args, err := builder.ToSql()
+//	if err != nil {
+//		return nil, status.Errorf(codes.Internal, "failed to build update query: %v", err)
+//	}
+//
+//	_, err = s.userRepo.Exec(ctx, query, args...)
+//	if err != nil {
+//		return nil, status.Errorf(codes.Internal, "failed to update user: %v", err)
+//	}
+//
+//	logger.Info("user %d updated", req.GetId())
+//
+//	return &emptypb.Empty{}, nil
+//}
+//
+//// Delete removes a user by ID.
+//func (s *server) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Empty, error) {
+//	builder := sq.Delete(tableUsers).
+//		Where(sq.Eq{columnID: req.GetId()}).
+//		PlaceholderFormat(sq.Dollar)
+//
+//	query, args, err := builder.ToSql()
+//	if err != nil {
+//		return nil, status.Errorf(codes.Internal, "failed to build delete query: %v", err)
+//	}
+//
+//	_, err = s.userRepo.Exec(ctx, query, args...)
+//	if err != nil {
+//		return nil, status.Errorf(codes.Internal, "failed to delete user: %v", err)
+//	}
+//
+//	logger.Info("user %d deleted", req.GetId())
+//
+//	return &emptypb.Empty{}, nil
+//}
+//
+//// List lists users with pagination support using limit and offset.
+//func (s *server) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
+//	limit := int(req.GetLimit())
+//	fmt.Println(limit)
+//	if limit <= 0 {
+//		limit = defaultPageSize
+//	}
+//
+//	builder := sq.Select("*").
+//		From(tableUsers).
+//		OrderBy(columnID).
+//		Limit(uint64(limit)).
+//		Offset(uint64(int(req.GetOffset()))).
+//		PlaceholderFormat(sq.Dollar)
+//
+//	query, args, err := builder.ToSql()
+//	if err != nil {
+//		return nil, status.Errorf(codes.Internal, "failed to build query: %v", err)
+//	}
+//
+//	rows, err := s.userRepo.Query(ctx, query, args...)
+//	if err != nil {
+//		return nil, status.Errorf(codes.Internal, "failed to list users: %v", err)
+//	}
+//	defer rows.Close()
+//
+//	var users []*pb.User
+//	for rows.Next() {
+//		var user pb.User
+//		var role string
+//		var createdAt, updatedAt time.Time
+//
+//		if err := rows.Scan(&user.Id, &user.Name, &user.Email, &role, &createdAt, &updatedAt); err != nil {
+//			return nil, status.Errorf(codes.Internal, "failed to scan user: %v", err)
+//		}
+//
+//		user.Role = pb.Role(pb.Role_value[role])
+//		user.CreatedAt = timestamppb.New(createdAt)
+//		user.UpdatedAt = timestamppb.New(updatedAt)
+//		users = append(users, &user)
+//	}
+//
+//	if err := rows.Err(); err != nil {
+//		return nil, status.Errorf(codes.Internal, "error iterating through rows: %v", err)
+//	}
+//
+//	logger.Info("users fetched")
+//
+//	return &pb.ListResponse{Users: users}, nil
+//}
 
 func main() {
 	cfg := config.MustLoad()
@@ -268,6 +215,8 @@ func main() {
 	}
 	defer pool.Close()
 
+	userRepository := userRepo.NewRepository(pool)
+
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.GRPC.GRPCPort))
 	if err != nil {
 		logger.Fatal("failed to listen: %v", err)
@@ -275,7 +224,7 @@ func main() {
 
 	s := grpc.NewServer()
 	reflection.Register(s)
-	pb.RegisterUserV1Server(s, &server{pool: pool})
+	pb.RegisterUserV1Server(s, &server{userRepository: userRepository})
 
 	logger.Info("%v listening at %v", cfg.AppName, lis.Addr())
 
