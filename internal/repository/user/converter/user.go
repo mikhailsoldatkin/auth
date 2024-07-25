@@ -7,6 +7,7 @@ import (
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 )
 
+// ToUserFromRepo converter from db User model to protobuf User model.
 func ToUserFromRepo(user *model.User) *pb.User {
 	return &pb.User{
 		Id:        user.ID,
