@@ -38,7 +38,7 @@ func NewRepository(db *pgxpool.Pool) repository.UserRepository {
 	return &repo{db: db}
 }
 
-// checkUserExists checks if user with given ID exists in database and returns an error if it doesn't.
+// checkUserExists checks if user with given ID exists in the database.
 func (r *repo) checkUserExists(ctx context.Context, userID int64) error {
 	var exists bool
 	query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE %s=$1)", tableUsers, columnID)
@@ -66,13 +66,13 @@ func (r *repo) Create(ctx context.Context, user *pb.User) (int64, error) {
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return 0, err
+		return 0, status.Errorf(codes.Internal, "failed to build SQL query: %v", err)
 	}
 
 	var id int
 	err = r.db.QueryRow(ctx, query, args...).Scan(&id)
 	if err != nil {
-		return 0, err
+		return 0, status.Errorf(codes.Internal, "failed to execute query: %v", err)
 	}
 
 	return int64(id), nil
@@ -97,7 +97,7 @@ func (r *repo) Get(ctx context.Context, id int64) (*pb.User, error) {
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to build SQL query: %v", err)
 	}
 
 	var user model.User
@@ -110,7 +110,7 @@ func (r *repo) Get(ctx context.Context, id int64) (*pb.User, error) {
 		&user.UpdatedAt,
 	)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to execute query: %v", err)
 	}
 
 	return converter.ToUserFromRepo(&user), nil
@@ -124,12 +124,12 @@ func (r *repo) Delete(ctx context.Context, id int64) error {
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return err
+		return status.Errorf(codes.Internal, "failed to build SQL query: %v", err)
 	}
 
 	_, err = r.db.Exec(ctx, query, args...)
 	if err != nil {
-		return err
+		return status.Errorf(codes.Internal, "failed to execute query: %v", err)
 	}
 
 	return nil
@@ -170,12 +170,12 @@ func (r *repo) Update(ctx context.Context, req *pb.UpdateRequest) error {
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return err
+		return status.Errorf(codes.Internal, "failed to build SQL query: %v", err)
 	}
 
 	_, err = r.db.Exec(ctx, query, args...)
 	if err != nil {
-		return err
+		return status.Errorf(codes.Internal, "failed to execute query: %v", err)
 	}
 
 	return nil
@@ -197,12 +197,12 @@ func (r *repo) List(ctx context.Context, req *pb.ListRequest) ([]*pb.User, error
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to build SQL query: %v", err)
 	}
 
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to execute query: %v", err)
 	}
 	defer rows.Close()
 
@@ -217,13 +217,13 @@ func (r *repo) List(ctx context.Context, req *pb.ListRequest) ([]*pb.User, error
 			&user.CreatedAt,
 			&user.UpdatedAt,
 		); err != nil {
-			return nil, err
+			return nil, status.Errorf(codes.Internal, "failed to scan row: %v", err)
 		}
 		users = append(users, &user)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "error occurred during row iteration: %v", err)
 	}
 
 	usersPb := make([]*pb.User, 0, len(users))
