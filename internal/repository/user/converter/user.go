@@ -1,20 +1,18 @@
 package converter
 
 import (
-	"github.com/mikhailsoldatkin/auth/internal/repository/user/model"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
-	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
+	"github.com/mikhailsoldatkin/auth/internal/model"
+	modelRepo "github.com/mikhailsoldatkin/auth/internal/repository/user/model"
 )
 
-// ToUserFromRepo converter from db User model to protobuf User model.
-func ToUserFromRepo(user *model.User) *pb.User {
-	return &pb.User{
-		Id:        user.ID,
+// ToServiceFromRepo converter from repo User model to business logic User model. TODO doc
+func ToServiceFromRepo(user *modelRepo.User) *model.User {
+	return &model.User{
+		ID:        user.ID,
 		Name:      user.Name,
 		Email:     user.Email,
-		Role:      pb.Role(pb.Role_value[user.Role]),
-		CreatedAt: timestamppb.New(user.CreatedAt),
-		UpdatedAt: timestamppb.New(user.UpdatedAt),
+		Role:      user.Role,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
 	}
 }

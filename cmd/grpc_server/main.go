@@ -8,9 +8,11 @@ import (
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/mikhailsoldatkin/auth/internal/config"
+	"github.com/mikhailsoldatkin/auth/internal/converter"
 	"github.com/mikhailsoldatkin/auth/internal/logger"
-	"github.com/mikhailsoldatkin/auth/internal/repository"
-	userRepo "github.com/mikhailsoldatkin/auth/internal/repository/user"
+	userRepository "github.com/mikhailsoldatkin/auth/internal/repository/user"
+	"github.com/mikhailsoldatkin/auth/internal/service"
+	userService "github.com/mikhailsoldatkin/auth/internal/service/user"
 	"github.com/mikhailsoldatkin/auth/internal/utils"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 	"google.golang.org/grpc"
@@ -22,7 +24,7 @@ import (
 
 type server struct {
 	pb.UnimplementedUserV1Server
-	userRepository repository.UserRepository
+	userService service.UserService
 }
 
 // Create handles the creation of a new user in the system.
@@ -33,12 +35,13 @@ func (s *server) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateR
 	if !utils.ValidateEmail(req.GetEmail()) {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid email format: %v", req.GetEmail())
 	}
+
 	user := &pb.User{
 		Name:  req.Name,
 		Email: req.Email,
 		Role:  req.Role,
 	}
-	id, err := s.userRepository.Create(ctx, user)
+	id, err := s.userService.Create(ctx, converter.ToServiceFromProtobuf(user))
 	if err != nil {
 		return nil, err
 	}
@@ -48,17 +51,17 @@ func (s *server) Create(ctx context.Context, req *pb.CreateRequest) (*pb.CreateR
 
 // Get retrieves user data by ID.
 func (s *server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	user, err := s.userRepository.Get(ctx, req.GetId())
+	user, err := s.userService.Get(ctx, req.GetId())
 	if err != nil {
 		return nil, err
 	}
 	logger.Info("user data retrieved %v", user)
-	return &pb.GetResponse{User: user}, nil
+	return &pb.GetResponse{User: converter.ToProtobufFromService(user)}, nil
 }
 
 // Update modifies user data.
 func (s *server) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Empty, error) {
-	err := s.userRepository.Update(ctx, req)
+	err := s.userService.Update(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +71,7 @@ func (s *server) Update(ctx context.Context, req *pb.UpdateRequest) (*emptypb.Em
 
 // Delete removes a user by ID.
 func (s *server) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Empty, error) {
-	err := s.userRepository.Delete(ctx, req.GetId())
+	err := s.userService.Delete(ctx, req.GetId())
 	if err != nil {
 		return nil, err
 	}
@@ -78,11 +81,18 @@ func (s *server) Delete(ctx context.Context, req *pb.DeleteRequest) (*emptypb.Em
 
 // List lists users with pagination support using limit and offset.
 func (s *server) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
-	users, err := s.userRepository.List(ctx, req)
+	usersServ, err := s.userService.List(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 	logger.Info("users fetched")
+
+	users := make([]*pb.User, 0, len(usersServ))
+
+	for _, userServ := range usersServ {
+		users = append(users, converter.ToProtobufFromService(userServ))
+	}
+
 	return &pb.ListResponse{Users: users}, nil
 }
 
@@ -104,8 +114,9 @@ func main() {
 	s := grpc.NewServer()
 	reflection.Register(s)
 
-	userRepository := userRepo.NewRepository(pool)
-	pb.RegisterUserV1Server(s, &server{userRepository: userRepository})
+	userRepo := userRepository.NewRepository(pool)
+	userSrv := userService.NewService(userRepo)
+	pb.RegisterUserV1Server(s, &server{userService: userSrv})
 
 	logger.Info("%v listening at %v", cfg.AppName, lis.Addr())
 

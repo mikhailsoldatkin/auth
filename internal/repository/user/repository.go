@@ -8,9 +8,10 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/brianvoe/gofakeit"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/mikhailsoldatkin/auth/internal/model"
 	"github.com/mikhailsoldatkin/auth/internal/repository"
 	"github.com/mikhailsoldatkin/auth/internal/repository/user/converter"
-	"github.com/mikhailsoldatkin/auth/internal/repository/user/model"
+	modelRepo "github.com/mikhailsoldatkin/auth/internal/repository/user/model"
 	"github.com/mikhailsoldatkin/auth/internal/utils"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 	"google.golang.org/grpc/codes"
@@ -53,7 +54,7 @@ func (r *repo) checkUserExists(ctx context.Context, userID int64) error {
 }
 
 // Create inserts a new user into the database.
-func (r *repo) Create(ctx context.Context, user *pb.User) (int64, error) {
+func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
 	builder := sq.Insert(tableUsers).
 		PlaceholderFormat(sq.Dollar).
 		Columns(
@@ -61,7 +62,7 @@ func (r *repo) Create(ctx context.Context, user *pb.User) (int64, error) {
 			columnEmail,
 			columnRole,
 		).
-		Values(gofakeit.Name(), gofakeit.Email(), user.Role.String()).
+		Values(gofakeit.Name(), gofakeit.Email(), user.Role).
 		Suffix("RETURNING id")
 
 	query, args, err := builder.ToSql()
@@ -69,17 +70,17 @@ func (r *repo) Create(ctx context.Context, user *pb.User) (int64, error) {
 		return 0, status.Errorf(codes.Internal, "failed to build SQL query: %v", err)
 	}
 
-	var id int
+	var id int64
 	err = r.db.QueryRow(ctx, query, args...).Scan(&id)
 	if err != nil {
 		return 0, status.Errorf(codes.Internal, "failed to execute query: %v", err)
 	}
 
-	return int64(id), nil
+	return id, nil
 }
 
 // Get retrieves a user by ID from the database.
-func (r *repo) Get(ctx context.Context, id int64) (*pb.User, error) {
+func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 	if err := r.checkUserExists(ctx, id); err != nil {
 		return nil, err
 	}
@@ -100,7 +101,7 @@ func (r *repo) Get(ctx context.Context, id int64) (*pb.User, error) {
 		return nil, status.Errorf(codes.Internal, "failed to build SQL query: %v", err)
 	}
 
-	var user model.User
+	var user modelRepo.User
 	err = r.db.QueryRow(ctx, query, args...).Scan(
 		&user.ID,
 		&user.Name,
@@ -113,7 +114,7 @@ func (r *repo) Get(ctx context.Context, id int64) (*pb.User, error) {
 		return nil, status.Errorf(codes.Internal, "failed to execute query: %v", err)
 	}
 
-	return converter.ToUserFromRepo(&user), nil
+	return converter.ToServiceFromRepo(&user), nil
 }
 
 // Delete removes a user by ID from the database.
@@ -182,7 +183,7 @@ func (r *repo) Update(ctx context.Context, req *pb.UpdateRequest) error {
 }
 
 // List retrieves a list of users from the database.
-func (r *repo) List(ctx context.Context, req *pb.ListRequest) ([]*pb.User, error) {
+func (r *repo) List(ctx context.Context, req *pb.ListRequest) ([]*model.User, error) {
 	limit := int(req.GetLimit())
 	if limit <= 0 {
 		limit = defaultPageSize
@@ -206,30 +207,30 @@ func (r *repo) List(ctx context.Context, req *pb.ListRequest) ([]*pb.User, error
 	}
 	defer rows.Close()
 
-	var users []*model.User
+	var usersRepo []*modelRepo.User
 	for rows.Next() {
-		var user model.User
+		var userRepo modelRepo.User
 		if err := rows.Scan(
-			&user.ID,
-			&user.Name,
-			&user.Email,
-			&user.Role,
-			&user.CreatedAt,
-			&user.UpdatedAt,
+			&userRepo.ID,
+			&userRepo.Name,
+			&userRepo.Email,
+			&userRepo.Role,
+			&userRepo.CreatedAt,
+			&userRepo.UpdatedAt,
 		); err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to scan row: %v", err)
 		}
-		users = append(users, &user)
+		usersRepo = append(usersRepo, &userRepo)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, status.Errorf(codes.Internal, "error occurred during row iteration: %v", err)
 	}
 
-	usersPb := make([]*pb.User, 0, len(users))
-	for _, user := range users {
-		usersPb = append(usersPb, converter.ToUserFromRepo(user))
+	users := make([]*model.User, 0, len(usersRepo))
+	for _, userRepo := range usersRepo {
+		users = append(users, converter.ToServiceFromRepo(userRepo))
 	}
 
-	return usersPb, nil
+	return users, nil
 }

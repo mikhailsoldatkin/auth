@@ -1,4 +1,4 @@
-package repository
+package service
 
 import (
 	"context"
@@ -7,9 +7,8 @@ import (
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 )
 
-// UserRepository defines the interface for user-related database operations.
-type UserRepository interface {
-	Create(ctx context.Context, user *model.User) (int64, error)
+type UserService interface {
+	Create(ctx context.Context, data *model.User) (int64, error)
 	Get(ctx context.Context, id int64) (*model.User, error)
 	Delete(ctx context.Context, id int64) error
 	Update(ctx context.Context, req *pb.UpdateRequest) error
