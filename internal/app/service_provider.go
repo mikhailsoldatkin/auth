@@ -41,7 +41,7 @@ func (s *serviceProvider) Config() *config.Config {
 
 func (s *serviceProvider) PgPool(ctx context.Context) *pgxpool.Pool {
 	if s.pgPool == nil {
-		pool, err := pgxpool.Connect(ctx, s.config.Database.PostgresDSN)
+		pool, err := pgxpool.Connect(ctx, s.Config().Database.PostgresDSN)
 		if err != nil {
 			log.Fatalf("failed to connect to database: %v", err)
 		}
