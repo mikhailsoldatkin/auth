@@ -5,6 +5,8 @@ import (
 	"github.com/mikhailsoldatkin/auth/internal/service"
 )
 
+var _ service.UserService = (*serv)(nil)
+
 type serv struct {
 	userRepository repository.UserRepository
 }

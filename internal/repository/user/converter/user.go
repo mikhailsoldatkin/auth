@@ -5,7 +5,7 @@ import (
 	modelRepo "github.com/mikhailsoldatkin/auth/internal/repository/user/model"
 )
 
-// ToServiceFromRepo converter from repo User model to business logic User model. TODO doc
+// ToServiceFromRepo converter from repository User model to service User model.
 func ToServiceFromRepo(user *modelRepo.User) *model.User {
 	return &model.User{
 		ID:        user.ID,
