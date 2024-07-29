@@ -15,11 +15,13 @@ import (
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 )
 
+// App represents the application with its dependencies and GRPC server.
 type App struct {
 	serviceProvider *serviceProvider
 	grpcServer      *grpc.Server
 }
 
+// NewApp initializes a new App instance with the given context and sets up the necessary dependencies.
 func NewApp(ctx context.Context) (*App, error) {
 	a := &App{}
 
@@ -31,6 +33,7 @@ func NewApp(ctx context.Context) (*App, error) {
 	return a, nil
 }
 
+// Run starts the GRPC server and handles graceful shutdown.
 func (a *App) Run() error {
 	defer func() {
 		closer.CloseAll()
@@ -40,6 +43,7 @@ func (a *App) Run() error {
 	return a.runGRPCServer()
 }
 
+// initDeps initializes the dependencies required by the App.
 func (a *App) initDeps(ctx context.Context) error {
 	inits := []func(context.Context) error{
 		a.initConfig,
@@ -80,15 +84,14 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 }
 
 func (a *App) runGRPCServer() error {
-	address := fmt.Sprintf(":%d", a.serviceProvider.Config().GRPC.GRPCPort)
-	list, err := net.Listen("tcp", address)
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", a.serviceProvider.config.GRPC.GRPCPort))
 	if err != nil {
 		return err
 	}
 
-	log.Printf("GRPC server is running on %d", a.serviceProvider.Config().GRPC.GRPCPort)
+	log.Printf("gRPC server is running on %d", a.serviceProvider.config.GRPC.GRPCPort)
 
-	err = a.grpcServer.Serve(list)
+	err = a.grpcServer.Serve(lis)
 	if err != nil {
 		return err
 	}
