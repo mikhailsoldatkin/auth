@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 
-	"github.com/mikhailsoldatkin/auth/internal/logger"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -14,6 +13,6 @@ func (i *Implementation) Update(ctx context.Context, req *pb.UpdateRequest) (*em
 	if err != nil {
 		return nil, err
 	}
-	logger.Info("user %d updated", req.GetId())
+
 	return &emptypb.Empty{}, nil
 }

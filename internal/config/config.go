@@ -32,7 +32,7 @@ type Config struct {
 	GRPC     GRPCConfig
 }
 
-// Load reads configuration from .env file
+// Load reads configuration from .env file.
 func Load() (*Config, error) {
 	if _, err := os.Stat(envPath); os.IsNotExist(err) {
 		return nil, fmt.Errorf(".env file does not exist in project's root")

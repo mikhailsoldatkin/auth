@@ -4,7 +4,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/mikhailsoldatkin/auth/internal/client/db"
+	"github.com/mikhailsoldatkin/auth/internal/client/db/pg"
 	userRepository "github.com/mikhailsoldatkin/auth/internal/repository/user"
 	"github.com/mikhailsoldatkin/auth/internal/service"
 	userService "github.com/mikhailsoldatkin/auth/internal/service/user"
@@ -17,7 +18,7 @@ import (
 
 type serviceProvider struct {
 	config             *config.Config
-	pgPool             *pgxpool.Pool
+	dbClient           db.Client
 	userRepository     repository.UserRepository
 	userService        service.UserService
 	userImplementation *user.Implementation
@@ -39,31 +40,28 @@ func (s *serviceProvider) Config() *config.Config {
 	return s.config
 }
 
-func (s *serviceProvider) PgPool(ctx context.Context) *pgxpool.Pool {
-	if s.pgPool == nil {
-		pool, err := pgxpool.Connect(ctx, s.Config().Database.PostgresDSN)
+func (s *serviceProvider) DbClient(ctx context.Context) db.Client {
+	if s.dbClient == nil {
+		cl, err := pg.New(ctx, s.Config().Database.PostgresDSN)
 		if err != nil {
-			log.Fatalf("failed to connect to database: %v", err)
+			log.Fatalf("failed to create db client: %v", err)
 		}
 
-		err = pool.Ping(ctx)
+		err = cl.DB().Ping(ctx)
 		if err != nil {
-			log.Fatalf("ping error: %s", err.Error())
+			log.Fatalf("db ping error: %s", err.Error())
 		}
-		closer.Add(func() error {
-			pool.Close()
-			return nil
-		})
+		closer.Add(cl.Close)
 
-		s.pgPool = pool
+		s.dbClient = cl
 	}
 
-	return s.pgPool
+	return s.dbClient
 }
 
 func (s *serviceProvider) UserRepository(ctx context.Context) repository.UserRepository {
 	if s.userRepository == nil {
-		s.userRepository = userRepository.NewRepository(s.PgPool(ctx))
+		s.userRepository = userRepository.NewRepository(s.DbClient(ctx))
 	}
 
 	return s.userRepository
@@ -77,7 +75,7 @@ func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
 	return s.userService
 }
 
-func (s *serviceProvider) UserImplementation(ctx context.Context) *user.Implementation {
+func (s *serviceProvider) UserAPIImplementation(ctx context.Context) *user.Implementation {
 	if s.userImplementation == nil {
 		s.userImplementation = user.NewImplementation(s.UserService(ctx))
 	}

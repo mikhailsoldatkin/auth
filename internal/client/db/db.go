@@ -7,57 +7,57 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-// Handler - функция, которая выполняется в транзакции.
+// Handler is a function that is executed within a transaction.
 type Handler func(ctx context.Context) error
 
-// Client клиент для работы с БД.
+// Client represents a client for working with the database.
 type Client interface {
 	DB() DB
 	Close() error
 }
 
-// TxManager менеджер транзакций, который выполняет указанный пользователем обработчик в транзакции.
+// TxManager is a transaction manager that executes the specified handler within a transaction.
 type TxManager interface {
 	ReadCommitted(ctx context.Context, f Handler) error
 }
 
-// Query обертка над запросом, хранящая имя запроса и сам запрос.
-// Имя запроса используется для логирования и потенциально может использоваться еще где-то, например, для трейсинга.
+// Query is a wrapper around a query, containing the query name and the query itself.
+// The query name is used for logging and potentially could be used for tracing or other purposes.
 type Query struct {
 	Name     string
 	QueryRaw string
 }
 
-// Transactor интерфейс для работы с транзакциями.
+// Transactor is an interface for working with transactions.
 type Transactor interface {
 	BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error)
 }
 
-// SQLExecer комбинирует NamedExecer и QueryExecer.
+// SQLExecer combines NamedExecer and QueryExecer.
 type SQLExecer interface {
 	NamedExecer
 	QueryExecer
 }
 
-// NamedExecer интерфейс для работы с именованными запросами с помощью тегов в структурах.
+// NamedExecer is an interface for working with named queries using tags in structures.
 type NamedExecer interface {
-	ScanOneContext(ctx context.Context, dest interface{}, q Query, args ...interface{}) error
-	ScanAllContext(ctx context.Context, dest interface{}, q Query, args ...interface{}) error
+	ScanOneContext(ctx context.Context, dest any, q Query, args ...any) error
+	ScanAllContext(ctx context.Context, dest any, q Query, args ...any) error
 }
 
-// QueryExecer интерфейс для работы с обычными запросами.
+// QueryExecer is an interface for working with regular queries.
 type QueryExecer interface {
-	ExecContext(ctx context.Context, q Query, args ...interface{}) (pgconn.CommandTag, error)
-	QueryContext(ctx context.Context, q Query, args ...interface{}) (pgx.Rows, error)
-	QueryRowContext(ctx context.Context, q Query, args ...interface{}) pgx.Row
+	ExecContext(ctx context.Context, q Query, args ...any) (pgconn.CommandTag, error)
+	QueryContext(ctx context.Context, q Query, args ...any) (pgx.Rows, error)
+	QueryRowContext(ctx context.Context, q Query, args ...any) pgx.Row
 }
 
-// Pinger интерфейс для проверки соединения с БД.
+// Pinger is an interface for checking the connection to the database.
 type Pinger interface {
 	Ping(ctx context.Context) error
 }
 
-// DB интерфейс для работы с БД.
+// DB is an interface for working with the database.
 type DB interface {
 	SQLExecer
 	Transactor

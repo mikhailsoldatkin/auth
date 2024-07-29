@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 
-	"github.com/mikhailsoldatkin/auth/internal/logger"
 	"github.com/mikhailsoldatkin/auth/internal/service/user/converter"
 	"github.com/mikhailsoldatkin/auth/internal/utils"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
@@ -30,6 +29,6 @@ func (i *Implementation) Create(ctx context.Context, req *pb.CreateRequest) (*pb
 	if err != nil {
 		return nil, err
 	}
-	logger.Info("user %d created", id)
+
 	return &pb.CreateResponse{Id: id}, nil
 }

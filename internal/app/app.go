@@ -78,7 +78,7 @@ func (a *App) initServiceProvider(_ context.Context) error {
 func (a *App) initGRPCServer(ctx context.Context) error {
 	a.grpcServer = grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
 	reflection.Register(a.grpcServer)
-	pb.RegisterUserV1Server(a.grpcServer, a.serviceProvider.UserImplementation(ctx))
+	pb.RegisterUserV1Server(a.grpcServer, a.serviceProvider.UserAPIImplementation(ctx))
 
 	return nil
 }

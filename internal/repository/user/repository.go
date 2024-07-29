@@ -7,7 +7,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/brianvoe/gofakeit"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/mikhailsoldatkin/auth/internal/client/db"
 	"github.com/mikhailsoldatkin/auth/internal/repository"
 	"github.com/mikhailsoldatkin/auth/internal/repository/user/converter"
 	modelRepo "github.com/mikhailsoldatkin/auth/internal/repository/user/model"
@@ -31,25 +31,32 @@ const (
 )
 
 type repo struct {
-	db *pgxpool.Pool
+	db db.Client
 }
 
 // NewRepository creates a new instance of the user repository.
-func NewRepository(db *pgxpool.Pool) repository.UserRepository {
+func NewRepository(db db.Client) repository.UserRepository {
 	return &repo{db: db}
 }
 
 // checkUserExists checks if user with given ID exists in the database.
 func (r *repo) checkUserExists(ctx context.Context, userID int64) error {
 	var exists bool
-	query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE %s=$1)", tableUsers, columnID)
-	err := r.db.QueryRow(ctx, query, userID).Scan(&exists)
+
+	query := db.Query{
+		Name:     "checkUserExists",
+		QueryRaw: fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE %s=$1)", tableUsers, columnID),
+	}
+
+	err := r.db.DB().ScanOneContext(ctx, &exists, query, userID)
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to check user existence: %v", err)
 	}
+
 	if !exists {
 		return status.Errorf(codes.NotFound, "user with ID %d not found", userID)
 	}
+
 	return nil
 }
 
@@ -70,8 +77,13 @@ func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
 		return 0, status.Errorf(codes.Internal, "failed to build SQL query: %v", err)
 	}
 
+	q := db.Query{
+		Name:     "user_repository.Create",
+		QueryRaw: query,
+	}
+
 	var id int64
-	err = r.db.QueryRow(ctx, query, args...).Scan(&id)
+	err = r.db.DB().ScanOneContext(ctx, &id, q, args...)
 	if err != nil {
 		return 0, status.Errorf(codes.Internal, "failed to execute query: %v", err)
 	}
@@ -101,15 +113,13 @@ func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 		return nil, status.Errorf(codes.Internal, "failed to build SQL query: %v", err)
 	}
 
+	q := db.Query{
+		Name:     "user_repository.Get",
+		QueryRaw: query,
+	}
+
 	var user modelRepo.User
-	err = r.db.QueryRow(ctx, query, args...).Scan(
-		&user.ID,
-		&user.Name,
-		&user.Email,
-		&user.Role,
-		&user.CreatedAt,
-		&user.UpdatedAt,
-	)
+	err = r.db.DB().ScanOneContext(ctx, &user, q, args...)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to execute query: %v", err)
 	}
@@ -128,7 +138,12 @@ func (r *repo) Delete(ctx context.Context, id int64) error {
 		return status.Errorf(codes.Internal, "failed to build SQL query: %v", err)
 	}
 
-	_, err = r.db.Exec(ctx, query, args...)
+	q := db.Query{
+		Name:     "user_repository.Delete",
+		QueryRaw: query,
+	}
+
+	_, err = r.db.DB().ExecContext(ctx, q, args...)
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to execute query: %v", err)
 	}
@@ -174,7 +189,12 @@ func (r *repo) Update(ctx context.Context, req *pb.UpdateRequest) error {
 		return status.Errorf(codes.Internal, "failed to build SQL query: %v", err)
 	}
 
-	_, err = r.db.Exec(ctx, query, args...)
+	q := db.Query{
+		Name:     "user_repository.Update",
+		QueryRaw: query,
+	}
+
+	_, err = r.db.DB().ExecContext(ctx, q, args...)
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to execute query: %v", err)
 	}
@@ -201,30 +221,15 @@ func (r *repo) List(ctx context.Context, req *pb.ListRequest) ([]*model.User, er
 		return nil, status.Errorf(codes.Internal, "failed to build SQL query: %v", err)
 	}
 
-	rows, err := r.db.Query(ctx, query, args...)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to execute query: %v", err)
+	q := db.Query{
+		Name:     "user_repository.List",
+		QueryRaw: query,
 	}
-	defer rows.Close()
 
 	var usersRepo []*modelRepo.User
-	for rows.Next() {
-		var userRepo modelRepo.User
-		if err := rows.Scan(
-			&userRepo.ID,
-			&userRepo.Name,
-			&userRepo.Email,
-			&userRepo.Role,
-			&userRepo.CreatedAt,
-			&userRepo.UpdatedAt,
-		); err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to scan row: %v", err)
-		}
-		usersRepo = append(usersRepo, &userRepo)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, status.Errorf(codes.Internal, "error occurred during row iteration: %v", err)
+	err = r.db.DB().ScanAllContext(ctx, &usersRepo, q, args...)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to execute query: %v", err)
 	}
 
 	users := make([]*model.User, 0, len(usersRepo))

@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 
-	"github.com/mikhailsoldatkin/auth/internal/logger"
 	"github.com/mikhailsoldatkin/auth/internal/service/user/converter"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 )
@@ -14,7 +13,6 @@ func (i *Implementation) List(ctx context.Context, req *pb.ListRequest) (*pb.Lis
 	if err != nil {
 		return nil, err
 	}
-	logger.Info("users fetched")
 
 	users := make([]*pb.User, 0, len(usersServ))
 
