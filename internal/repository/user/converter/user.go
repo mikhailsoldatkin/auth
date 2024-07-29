@@ -1,8 +1,8 @@
 package converter
 
 import (
-	"github.com/mikhailsoldatkin/auth/internal/model"
 	modelRepo "github.com/mikhailsoldatkin/auth/internal/repository/user/model"
+	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 )
 
 // ToServiceFromRepo converter from repository User model to service User model.

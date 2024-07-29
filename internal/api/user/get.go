@@ -3,8 +3,8 @@ package user
 import (
 	"context"
 
-	"github.com/mikhailsoldatkin/auth/internal/converter"
 	"github.com/mikhailsoldatkin/auth/internal/logger"
+	"github.com/mikhailsoldatkin/auth/internal/service/user/converter"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 )
 

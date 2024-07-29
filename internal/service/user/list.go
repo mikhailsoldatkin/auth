@@ -3,7 +3,7 @@ package user
 import (
 	"context"
 
-	"github.com/mikhailsoldatkin/auth/internal/model"
+	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 )
 

@@ -3,7 +3,7 @@ package user
 import (
 	"context"
 
-	"github.com/mikhailsoldatkin/auth/internal/model"
+	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 )
 
 // Create creates a new user in the system.

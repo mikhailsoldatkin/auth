@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// User represents a user entity in the database.
+// User represents a business logic user model.
 type User struct {
 	ID        int64     `db:"id"`
 	Name      string    `db:"name"`

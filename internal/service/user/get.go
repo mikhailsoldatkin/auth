@@ -3,7 +3,7 @@ package user
 import (
 	"context"
 
-	"github.com/mikhailsoldatkin/auth/internal/model"
+	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 )
 
 // Get retrieves a user from the system by ID.

@@ -3,8 +3,8 @@ package user
 import (
 	"context"
 
-	"github.com/mikhailsoldatkin/auth/internal/converter"
 	"github.com/mikhailsoldatkin/auth/internal/logger"
+	"github.com/mikhailsoldatkin/auth/internal/service/user/converter"
 	"github.com/mikhailsoldatkin/auth/internal/utils"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 	"google.golang.org/grpc/codes"

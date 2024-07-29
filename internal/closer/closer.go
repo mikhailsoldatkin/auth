@@ -9,22 +9,22 @@ import (
 
 var globalCloser = New()
 
-// Add ...
+// Add adds functions to the global closer.
 func Add(f ...func() error) {
 	globalCloser.Add(f...)
 }
 
-// Wait ...
+// Wait waits until all the functions added to the global closer are done.
 func Wait() {
 	globalCloser.Wait()
 }
 
-// CloseAll ...
+// CloseAll calls all closer functions added to the global closer.
 func CloseAll() {
 	globalCloser.CloseAll()
 }
 
-// Closer ...
+// Closer holds functions that need to be called to release resources.
 type Closer struct {
 	mu    sync.Mutex
 	once  sync.Once
@@ -32,7 +32,8 @@ type Closer struct {
 	funcs []func() error
 }
 
-// New returns new Closer, if []os.Signal is specified Closer will automatically call CloseAll when one of signals is received from OS
+// New returns new Closer, if []os.Signal is specified Closer will
+// automatically call CloseAll when one of signals is received from OS.
 func New(sig ...os.Signal) *Closer {
 	c := &Closer{done: make(chan struct{})}
 	if len(sig) > 0 {
@@ -47,20 +48,21 @@ func New(sig ...os.Signal) *Closer {
 	return c
 }
 
-// Add func to closer
+// Add func to closer.
 func (c *Closer) Add(f ...func() error) {
 	c.mu.Lock()
 	c.funcs = append(c.funcs, f...)
 	c.mu.Unlock()
 }
 
-// Wait blocks until all closer functions are done
+// Wait blocks until all closer functions are done.
 func (c *Closer) Wait() {
 	<-c.done
 }
 
-// CloseAll calls all closer functions
+// CloseAll calls all functions added to the Closer.
 func (c *Closer) CloseAll() {
+	// ensure CloseAll is only executed once
 	c.once.Do(func() {
 		defer close(c.done)
 
@@ -71,15 +73,26 @@ func (c *Closer) CloseAll() {
 
 		// call all Closer funcs async
 		errs := make(chan error, len(funcs))
+		var wg sync.WaitGroup
+
 		for _, f := range funcs {
+			wg.Add(1)
 			go func(f func() error) {
+				defer wg.Done()
 				errs <- f()
 			}(f)
 		}
 
-		for i := 0; i < cap(errs); i++ {
-			if err := <-errs; err != nil {
-				log.Println("error returned from Closer")
+		// close the errs channel once all goroutines are done
+		go func() {
+			wg.Wait()
+			close(errs)
+		}()
+
+		// receive from the errs channel
+		for err := range errs {
+			if err != nil {
+				log.Println("error returned from Closer:", err)
 			}
 		}
 	})

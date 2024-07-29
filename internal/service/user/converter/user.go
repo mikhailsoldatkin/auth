@@ -1,7 +1,7 @@
 package converter
 
 import (
-	"github.com/mikhailsoldatkin/auth/internal/model"
+	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
