@@ -2,7 +2,6 @@ package pg
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/georgysavva/scany/pgxscan"
@@ -109,5 +108,5 @@ func MakeContextTx(ctx context.Context, tx pgx.Tx) context.Context {
 // logQuery logs the query and its arguments, including a pretty-printed version of the query.
 func logQuery(_ context.Context, q db.Query, args ...any) {
 	prettyQuery := prettier.Pretty(q.QueryRaw, prettier.PlaceholderDollar, args...)
-	log.Println(fmt.Sprintf("query: %s sql: %s", q.Name, prettyQuery))
+	log.Printf("query: %s sql: %s\n", q.Name, prettyQuery)
 }
