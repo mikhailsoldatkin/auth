@@ -6,6 +6,7 @@ import (
 
 	"github.com/mikhailsoldatkin/auth/internal/client/db"
 	"github.com/mikhailsoldatkin/auth/internal/client/db/pg"
+	"github.com/mikhailsoldatkin/auth/internal/client/db/transaction"
 	userRepository "github.com/mikhailsoldatkin/auth/internal/repository/user"
 	"github.com/mikhailsoldatkin/auth/internal/service"
 	userService "github.com/mikhailsoldatkin/auth/internal/service/user"
@@ -19,6 +20,7 @@ import (
 type serviceProvider struct {
 	config             *config.Config
 	dbClient           db.Client
+	txManager          db.TxManager
 	userRepository     repository.UserRepository
 	userService        service.UserService
 	userImplementation *user.Implementation
@@ -40,7 +42,7 @@ func (s *serviceProvider) Config() *config.Config {
 	return s.config
 }
 
-func (s *serviceProvider) DbClient(ctx context.Context) db.Client {
+func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 	if s.dbClient == nil {
 		cl, err := pg.New(ctx, s.Config().Database.PostgresDSN)
 		if err != nil {
@@ -59,9 +61,17 @@ func (s *serviceProvider) DbClient(ctx context.Context) db.Client {
 	return s.dbClient
 }
 
+func (s *serviceProvider) TxManager(ctx context.Context) db.TxManager {
+	if s.txManager == nil {
+		s.txManager = transaction.NewTransactionManager(s.DBClient(ctx).DB())
+	}
+
+	return s.txManager
+}
+
 func (s *serviceProvider) UserRepository(ctx context.Context) repository.UserRepository {
 	if s.userRepository == nil {
-		s.userRepository = userRepository.NewRepository(s.DbClient(ctx))
+		s.userRepository = userRepository.NewRepository(s.DBClient(ctx))
 	}
 
 	return s.userRepository
@@ -69,13 +79,16 @@ func (s *serviceProvider) UserRepository(ctx context.Context) repository.UserRep
 
 func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
 	if s.userService == nil {
-		s.userService = userService.NewService(s.UserRepository(ctx))
+		s.userService = userService.NewService(
+			s.UserRepository(ctx),
+			s.TxManager(ctx),
+		)
 	}
 
 	return s.userService
 }
 
-func (s *serviceProvider) UserAPIImplementation(ctx context.Context) *user.Implementation {
+func (s *serviceProvider) UserImplementation(ctx context.Context) *user.Implementation {
 	if s.userImplementation == nil {
 		s.userImplementation = user.NewImplementation(s.UserService(ctx))
 	}

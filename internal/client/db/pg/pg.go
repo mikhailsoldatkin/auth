@@ -22,11 +22,6 @@ type pg struct {
 	dbc *pgxpool.Pool
 }
 
-// NewDB creates a new instance of pg with the given pgxpool.Pool and returns it as a db.DB.
-func NewDB(dbc *pgxpool.Pool) db.DB {
-	return &pg{dbc: dbc}
-}
-
 // ScanOneContext executes a query that returns a single row and scans the result into the destination.
 func (p *pg) ScanOneContext(ctx context.Context, dest any, q db.Query, args ...any) error {
 	logQuery(ctx, q, args...)

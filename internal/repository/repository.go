@@ -14,4 +14,5 @@ type UserRepository interface {
 	Delete(ctx context.Context, id int64) error
 	Update(ctx context.Context, req *pb.UpdateRequest) error
 	List(ctx context.Context, req *pb.ListRequest) ([]*model.User, error)
+	LogAction(ctx context.Context, userID int64, details string) error
 }

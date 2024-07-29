@@ -13,5 +13,6 @@ func (s *serv) List(ctx context.Context, req *pb.ListRequest) ([]*model.User, er
 	if err != nil {
 		return nil, err
 	}
+
 	return users, nil
 }

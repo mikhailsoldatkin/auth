@@ -27,6 +27,10 @@ const (
 	columnCreatedAt = "created_at"
 	columnUpdatedAt = "updated_at"
 
+	tableUsersLogs = "users_logs"
+	columnDetails  = "details"
+	columnUserID   = "user_id"
+
 	defaultPageSize = 10
 )
 
@@ -238,4 +242,29 @@ func (r *repo) List(ctx context.Context, req *pb.ListRequest) ([]*model.User, er
 	}
 
 	return users, nil
+}
+
+// LogAction logs an action on user with detailed information.
+func (r *repo) LogAction(ctx context.Context, userID int64, details string) error {
+	builder := sq.Insert(tableUsersLogs).
+		PlaceholderFormat(sq.Dollar).
+		Columns(columnUserID, columnDetails).
+		Values(userID, details)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return fmt.Errorf("failed to build SQL query: %w", err)
+	}
+
+	q := db.Query{
+		Name:     "user_repository.LogAction",
+		QueryRaw: query,
+	}
+
+	_, err = r.db.DB().ExecContext(ctx, q, args...)
+	if err != nil {
+		return fmt.Errorf("failed to execute SQL query: %w", err)
+	}
+
+	return nil
 }
