@@ -6,7 +6,6 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/brianvoe/gofakeit"
 	"github.com/mikhailsoldatkin/auth/internal/client/db"
 	"github.com/mikhailsoldatkin/auth/internal/repository"
 	"github.com/mikhailsoldatkin/auth/internal/repository/user/converter"
@@ -73,7 +72,7 @@ func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
 			columnEmail,
 			columnRole,
 		).
-		Values(gofakeit.Name(), gofakeit.Email(), user.Role).
+		Values(user.Name, user.Email, user.Role).
 		Suffix("RETURNING id")
 
 	query, args, err := builder.ToSql()
