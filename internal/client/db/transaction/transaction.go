@@ -51,7 +51,7 @@ func (m *manager) transaction(ctx context.Context, opts pgx.TxOptions, fn db.Han
 			return
 		}
 
-		// If no errors, commit the transaction
+		// If no error, commit the transaction
 		if nil == err {
 			err = tx.Commit(ctx)
 			if err != nil {

@@ -2,7 +2,7 @@
 CREATE TABLE users_logs
 (
     id        BIGSERIAL PRIMARY KEY,
-    user_id   BIGINT NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    user_id   BIGINT REFERENCES users (id) ON DELETE SET NULL,
     details   TEXT   NOT NULL,
     timestamp TIMESTAMPTZ DEFAULT NOW()
 );

@@ -11,15 +11,15 @@ import (
 func (s *serv) Create(ctx context.Context, user *model.User) (int64, error) {
 	var id int64
 	err := s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
-		var err error
-		id, err = s.userRepository.Create(ctx, user)
-		if err != nil {
-			return err
+		var errTx error
+		id, errTx = s.userRepository.Create(ctx, user)
+		if errTx != nil {
+			return errTx
 		}
 
-		errLog := s.userRepository.LogAction(ctx, id, fmt.Sprintf("user created with ID %d", id))
-		if errLog != nil {
-			return errLog
+		errTx = s.logRepository.Log(ctx, id, fmt.Sprintf("user created with ID %d", id))
+		if errTx != nil {
+			return errTx
 		}
 
 		return nil

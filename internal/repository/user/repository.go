@@ -2,17 +2,17 @@ package user
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/brianvoe/gofakeit"
+	"github.com/jackc/pgx/v4"
 	"github.com/mikhailsoldatkin/auth/internal/client/db"
+	"github.com/mikhailsoldatkin/auth/internal/customerrors"
 	"github.com/mikhailsoldatkin/auth/internal/repository"
 	"github.com/mikhailsoldatkin/auth/internal/repository/user/converter"
 	modelRepo "github.com/mikhailsoldatkin/auth/internal/repository/user/model"
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
-	"github.com/mikhailsoldatkin/auth/internal/utils"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -27,10 +27,6 @@ const (
 	columnCreatedAt = "created_at"
 	columnUpdatedAt = "updated_at"
 
-	tableUsersLogs = "users_logs"
-	columnDetails  = "details"
-	columnUserID   = "user_id"
-
 	defaultPageSize = 10
 )
 
@@ -43,27 +39,6 @@ func NewRepository(db db.Client) repository.UserRepository {
 	return &repo{db: db}
 }
 
-// checkUserExists checks if user with given ID exists in the database.
-func (r *repo) checkUserExists(ctx context.Context, userID int64) error {
-	var exists bool
-
-	query := db.Query{
-		Name:     "checkUserExists",
-		QueryRaw: fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE %s=$1)", tableUsers, columnID),
-	}
-
-	err := r.db.DB().ScanOneContext(ctx, &exists, query, userID)
-	if err != nil {
-		return status.Errorf(codes.Internal, "failed to check user existence: %v", err)
-	}
-
-	if !exists {
-		return status.Errorf(codes.NotFound, "user with ID %d not found", userID)
-	}
-
-	return nil
-}
-
 // Create inserts a new user into the database.
 func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
 	builder := sq.Insert(tableUsers).
@@ -73,12 +48,12 @@ func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
 			columnEmail,
 			columnRole,
 		).
-		Values(gofakeit.Name(), gofakeit.Email(), user.Role).
+		Values(user.Name, user.Email, user.Role).
 		Suffix("RETURNING id")
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return 0, status.Errorf(codes.Internal, "failed to build SQL query: %v", err)
+		return 0, err
 	}
 
 	q := db.Query{
@@ -97,9 +72,6 @@ func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
 
 // Get retrieves a user by ID from the database.
 func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
-	if err := r.checkUserExists(ctx, id); err != nil {
-		return nil, err
-	}
 	builder := sq.Select(
 		columnID,
 		columnName,
@@ -114,7 +86,7 @@ func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to build SQL query: %v", err)
+		return nil, err
 	}
 
 	q := db.Query{
@@ -125,7 +97,10 @@ func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 	var user modelRepo.User
 	err = r.db.DB().ScanOneContext(ctx, &user, q, args...)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to execute query: %v", err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, customerrors.ErrNotFound
+		}
+		return nil, err
 	}
 
 	return converter.ToServiceFromRepo(&user), nil
@@ -139,7 +114,7 @@ func (r *repo) Delete(ctx context.Context, id int64) error {
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return status.Errorf(codes.Internal, "failed to build SQL query: %v", err)
+		return err
 	}
 
 	q := db.Query{
@@ -149,7 +124,7 @@ func (r *repo) Delete(ctx context.Context, id int64) error {
 
 	_, err = r.db.DB().ExecContext(ctx, q, args...)
 	if err != nil {
-		return status.Errorf(codes.Internal, "failed to execute query: %v", err)
+		return err
 	}
 
 	return nil
@@ -157,31 +132,18 @@ func (r *repo) Delete(ctx context.Context, id int64) error {
 
 // Update modifies an existing user in the database.
 func (r *repo) Update(ctx context.Context, req *pb.UpdateRequest) error {
-	if err := r.checkUserExists(ctx, req.GetId()); err != nil {
-		return err
-	}
-
 	updateFields := make(map[string]any)
+	updateFields[columnUpdatedAt] = time.Now()
 
 	if req.GetName() != nil {
 		updateFields[columnName] = req.GetName().GetValue()
 	}
 	if req.GetEmail() != nil {
-		email := req.GetEmail().GetValue()
-		if !utils.ValidateEmail(email) {
-			return status.Errorf(codes.InvalidArgument, "invalid email format: %v", email)
-		}
-		updateFields[columnEmail] = email
+		updateFields[columnEmail] = req.GetEmail().GetValue()
 	}
 	if req.GetRole().String() != "" {
 		updateFields[columnRole] = req.GetRole().String()
 	}
-
-	if len(updateFields) == 0 {
-		return status.Errorf(codes.InvalidArgument, "no fields to update")
-	}
-
-	updateFields[columnUpdatedAt] = time.Now()
 
 	builder := sq.Update(tableUsers).
 		SetMap(updateFields).
@@ -190,7 +152,7 @@ func (r *repo) Update(ctx context.Context, req *pb.UpdateRequest) error {
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return status.Errorf(codes.Internal, "failed to build SQL query: %v", err)
+		return err
 	}
 
 	q := db.Query{
@@ -200,7 +162,10 @@ func (r *repo) Update(ctx context.Context, req *pb.UpdateRequest) error {
 
 	_, err = r.db.DB().ExecContext(ctx, q, args...)
 	if err != nil {
-		return status.Errorf(codes.Internal, "failed to execute query: %v", err)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return customerrors.ErrNotFound
+		}
+		return err
 	}
 
 	return nil
@@ -222,7 +187,7 @@ func (r *repo) List(ctx context.Context, req *pb.ListRequest) ([]*model.User, er
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to build SQL query: %v", err)
+		return nil, err
 	}
 
 	q := db.Query{
@@ -233,38 +198,8 @@ func (r *repo) List(ctx context.Context, req *pb.ListRequest) ([]*model.User, er
 	var usersRepo []*modelRepo.User
 	err = r.db.DB().ScanAllContext(ctx, &usersRepo, q, args...)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to execute query: %v", err)
+		return nil, err
 	}
 
-	users := make([]*model.User, 0, len(usersRepo))
-	for _, userRepo := range usersRepo {
-		users = append(users, converter.ToServiceFromRepo(userRepo))
-	}
-
-	return users, nil
-}
-
-// LogAction logs an action on user with detailed information.
-func (r *repo) LogAction(ctx context.Context, userID int64, details string) error {
-	builder := sq.Insert(tableUsersLogs).
-		PlaceholderFormat(sq.Dollar).
-		Columns(columnUserID, columnDetails).
-		Values(userID, details)
-
-	query, args, err := builder.ToSql()
-	if err != nil {
-		return fmt.Errorf("failed to build SQL query: %w", err)
-	}
-
-	q := db.Query{
-		Name:     "user_repository.LogAction",
-		QueryRaw: query,
-	}
-
-	_, err = r.db.DB().ExecContext(ctx, q, args...)
-	if err != nil {
-		return fmt.Errorf("failed to execute SQL query: %w", err)
-	}
-
-	return nil
+	return converter.ToServiceFromRepoList(usersRepo), nil
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/mikhailsoldatkin/auth/internal/client/db"
 	"github.com/mikhailsoldatkin/auth/internal/client/db/pg"
 	"github.com/mikhailsoldatkin/auth/internal/client/db/transaction"
+	logRepository "github.com/mikhailsoldatkin/auth/internal/repository/log"
 	userRepository "github.com/mikhailsoldatkin/auth/internal/repository/user"
 	"github.com/mikhailsoldatkin/auth/internal/service"
 	userService "github.com/mikhailsoldatkin/auth/internal/service/user"
@@ -22,6 +23,7 @@ type serviceProvider struct {
 	dbClient           db.Client
 	txManager          db.TxManager
 	userRepository     repository.UserRepository
+	logRepository      repository.LogRepository
 	userService        service.UserService
 	userImplementation *user.Implementation
 }
@@ -77,10 +79,19 @@ func (s *serviceProvider) UserRepository(ctx context.Context) repository.UserRep
 	return s.userRepository
 }
 
+func (s *serviceProvider) LogRepository(ctx context.Context) repository.LogRepository {
+	if s.logRepository == nil {
+		s.logRepository = logRepository.NewRepository(s.DBClient(ctx))
+	}
+
+	return s.logRepository
+}
+
 func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
 	if s.userService == nil {
 		s.userService = userService.NewService(
 			s.UserRepository(ctx),
+			s.LogRepository(ctx),
 			s.TxManager(ctx),
 		)
 	}

@@ -9,17 +9,19 @@ import (
 
 // Update modifies an existing user's data based on the provided update request and logs the operation.
 func (s *serv) Update(ctx context.Context, req *pb.UpdateRequest) error {
-	return s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
-		err := s.userRepository.Update(ctx, req)
-		if err != nil {
-			return err
+	err := s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
+		errTx := s.userRepository.Update(ctx, req)
+		if errTx != nil {
+			return errTx
 		}
 
-		logErr := s.userRepository.LogAction(ctx, req.GetId(), fmt.Sprintf("user with ID %d updated", req.GetId()))
-		if logErr != nil {
-			return logErr
+		errTx = s.logRepository.Log(ctx, req.GetId(), fmt.Sprintf("user with ID %d updated", req.GetId()))
+		if errTx != nil {
+			return errTx
 		}
 
 		return nil
 	})
+
+	return err
 }

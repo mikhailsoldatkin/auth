@@ -16,3 +16,12 @@ func ToServiceFromRepo(user *modelRepo.User) *model.User {
 		UpdatedAt: user.UpdatedAt,
 	}
 }
+
+// ToServiceFromRepoList converts list of repository User models to list of service User models.
+func ToServiceFromRepoList(users []*modelRepo.User) []*model.User {
+	serviceUsers := make([]*model.User, len(users))
+	for i, user := range users {
+		serviceUsers[i] = ToServiceFromRepo(user)
+	}
+	return serviceUsers
+}

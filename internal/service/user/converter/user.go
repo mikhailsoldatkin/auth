@@ -1,6 +1,8 @@
 package converter
 
 import (
+	"time"
+
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -19,14 +21,22 @@ func ToProtobufFromService(user *model.User) *pb.User {
 	}
 }
 
-// ToServiceFromProtobuf converter from protobuf User model to service User model.
-func ToServiceFromProtobuf(user *pb.User) *model.User {
+// ToProtobufFromServiceList converts a list of service User models to a list of protobuf User models.
+func ToProtobufFromServiceList(users []*model.User) []*pb.User {
+	protobufUsers := make([]*pb.User, len(users))
+	for i, user := range users {
+		protobufUsers[i] = ToProtobufFromService(user)
+	}
+	return protobufUsers
+}
+
+// ToServiceFromProtobuf converter from protobuf request to service User model.
+func ToServiceFromProtobuf(req *pb.CreateRequest) *model.User {
 	return &model.User{
-		ID:        user.Id,
-		Name:      user.Name,
-		Email:     user.Email,
-		Role:      user.Role.String(),
-		CreatedAt: user.CreatedAt.AsTime(),
-		UpdatedAt: user.UpdatedAt.AsTime(),
+		Name:      req.Name,
+		Email:     req.Email,
+		Role:      req.Role.String(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 }
