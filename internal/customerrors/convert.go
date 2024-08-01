@@ -9,9 +9,11 @@ import (
 
 // ConvertError converts an error into a gRPC error with the appropriate status code.
 func ConvertError(err error) error {
+	var errNotFound *ErrNotFound
+
 	switch {
-	case errors.Is(err, ErrNotFound):
-		return status.Errorf(codes.NotFound, err.Error())
+	case errors.As(err, &errNotFound):
+		return status.Errorf(codes.NotFound, errNotFound.Error())
 	default:
 		return status.Errorf(codes.Internal, err.Error())
 	}
