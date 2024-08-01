@@ -97,7 +97,7 @@ func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 	err = r.db.DB().ScanOneContext(ctx, &user, q, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, customerrors.NewNotFoundError(userEntity, id)
+			return nil, customerrors.NewErrNotFound(userEntity, id)
 		}
 		return nil, err
 	}
@@ -162,7 +162,7 @@ func (r *repo) Update(ctx context.Context, req *pb.UpdateRequest) error {
 	_, err = r.db.DB().ExecContext(ctx, q, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return customerrors.NewNotFoundError(userEntity, req.GetId())
+			return customerrors.NewErrNotFound(userEntity, req.GetId())
 		}
 		return err
 	}

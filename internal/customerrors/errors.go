@@ -13,8 +13,8 @@ func (e *ErrNotFound) Error() string {
 	return fmt.Sprintf("%s %d not found", e.Entity, e.ID)
 }
 
-// NewNotFoundError creates a new ErrNotFound for a given entity and ID.
-func NewNotFoundError(entity string, id int64) error {
+// NewErrNotFound creates a new ErrNotFound for a given entity and ID.
+func NewErrNotFound(entity string, id int64) error {
 	return &ErrNotFound{
 		Entity: entity,
 		ID:     id,
