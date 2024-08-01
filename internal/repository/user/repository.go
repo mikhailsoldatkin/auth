@@ -14,8 +14,6 @@ import (
 	modelRepo "github.com/mikhailsoldatkin/auth/internal/repository/user/model"
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 const (
@@ -64,7 +62,7 @@ func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
 	var id int64
 	err = r.db.DB().ScanOneContext(ctx, &id, q, args...)
 	if err != nil {
-		return 0, status.Errorf(codes.Internal, "failed to execute query: %v", err)
+		return 0, err
 	}
 
 	return id, nil
