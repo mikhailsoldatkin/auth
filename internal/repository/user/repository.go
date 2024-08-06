@@ -40,14 +40,17 @@ func NewRepository(db db.Client) repository.UserRepository {
 
 // Create inserts a new user into the database.
 func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
+	currentTime := time.Now()
 	builder := sq.Insert(tableUsers).
 		PlaceholderFormat(sq.Dollar).
 		Columns(
 			columnName,
 			columnEmail,
 			columnRole,
+			columnCreatedAt,
+			columnUpdatedAt,
 		).
-		Values(user.Name, user.Email, user.Role).
+		Values(user.Name, user.Email, user.Role, currentTime, currentTime).
 		Suffix("RETURNING id")
 
 	query, args, err := builder.ToSql()
