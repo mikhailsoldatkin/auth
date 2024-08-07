@@ -1,6 +1,8 @@
 package user
 
 import (
+	"context"
+
 	"github.com/mikhailsoldatkin/auth/internal/client/db"
 	"github.com/mikhailsoldatkin/auth/internal/repository"
 	"github.com/mikhailsoldatkin/auth/internal/service"
@@ -25,4 +27,35 @@ func NewService(
 		logRepository:  logRepository,
 		txManager:      txManager,
 	}
+}
+
+// No-op implementation for LogRepository
+type noOpLogRepository struct{}
+
+func (noOpLogRepository) Log(_ context.Context, _ int64, _ string) error {
+	return nil
+}
+
+// No-op implementation for TxManager
+type noOpTxManager struct{}
+
+func (noOpTxManager) ReadCommitted(ctx context.Context, f db.Handler) error {
+	return f(ctx)
+}
+
+// NewMockService creates a new mock instance of the user service.
+func NewMockService(deps ...any) service.UserService {
+	srv := serv{
+		logRepository: noOpLogRepository{},
+		txManager:     noOpTxManager{},
+	}
+
+	for _, v := range deps {
+		switch s := v.(type) {
+		case repository.UserRepository:
+			srv.userRepository = s
+		}
+	}
+
+	return &srv
 }
