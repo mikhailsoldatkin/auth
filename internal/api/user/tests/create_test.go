@@ -120,7 +120,7 @@ func TestCreate(t *testing.T) {
 			},
 			want: nil,
 			err:  status.Errorf(codes.InvalidArgument, "password validation failed: passwords don't match"),
-			userServiceMock: func(mc *minimock.Controller) service.UserService {
+			userServiceMock: func(_ *minimock.Controller) service.UserService {
 				return nil
 			},
 		},
@@ -132,7 +132,7 @@ func TestCreate(t *testing.T) {
 			},
 			want: nil,
 			err:  status.Errorf(codes.InvalidArgument, fmt.Sprintf("invalid email format: %s", wrongEmail)),
-			userServiceMock: func(mc *minimock.Controller) service.UserService {
+			userServiceMock: func(_ *minimock.Controller) service.UserService {
 				return nil
 			},
 		},
