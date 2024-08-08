@@ -4,18 +4,18 @@ import (
 	"context"
 	"log"
 
-	"github.com/mikhailsoldatkin/auth/internal/client/db"
-	"github.com/mikhailsoldatkin/auth/internal/client/db/pg"
-	"github.com/mikhailsoldatkin/auth/internal/client/db/transaction"
 	logRepository "github.com/mikhailsoldatkin/auth/internal/repository/log"
 	userRepository "github.com/mikhailsoldatkin/auth/internal/repository/user"
 	"github.com/mikhailsoldatkin/auth/internal/service"
 	userService "github.com/mikhailsoldatkin/auth/internal/service/user"
+	"github.com/mikhailsoldatkin/platform_common/pkg/db"
+	"github.com/mikhailsoldatkin/platform_common/pkg/db/pg"
+	"github.com/mikhailsoldatkin/platform_common/pkg/db/transaction"
 
 	"github.com/mikhailsoldatkin/auth/internal/api/user"
-	"github.com/mikhailsoldatkin/auth/internal/closer"
 	"github.com/mikhailsoldatkin/auth/internal/config"
 	"github.com/mikhailsoldatkin/auth/internal/repository"
+	"github.com/mikhailsoldatkin/platform_common/pkg/closer"
 )
 
 type serviceProvider struct {

@@ -10,9 +10,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
-	"github.com/mikhailsoldatkin/auth/internal/closer"
 	"github.com/mikhailsoldatkin/auth/internal/config"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
+	"github.com/mikhailsoldatkin/platform_common/pkg/closer"
 )
 
 // App represents the application with its dependencies and GRPC server.

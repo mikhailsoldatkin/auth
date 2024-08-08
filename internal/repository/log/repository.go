@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/mikhailsoldatkin/auth/internal/client/db"
 	"github.com/mikhailsoldatkin/auth/internal/repository"
+	"github.com/mikhailsoldatkin/platform_common/pkg/db"
 )
 
 const (
