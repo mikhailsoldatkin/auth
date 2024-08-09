@@ -1,7 +1,7 @@
 package converter
 
 import (
-	modelRepo "github.com/mikhailsoldatkin/auth/internal/repository/user/model"
+	modelRepo "github.com/mikhailsoldatkin/auth/internal/repository/user/pg/model"
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 )
 

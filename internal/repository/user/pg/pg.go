@@ -1,4 +1,4 @@
-package user
+package pg
 
 import (
 	"context"
@@ -9,8 +9,8 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/mikhailsoldatkin/auth/internal/customerrors"
 	"github.com/mikhailsoldatkin/auth/internal/repository"
-	"github.com/mikhailsoldatkin/auth/internal/repository/user/converter"
-	modelRepo "github.com/mikhailsoldatkin/auth/internal/repository/user/model"
+	"github.com/mikhailsoldatkin/auth/internal/repository/user/pg/converter"
+	modelRepo "github.com/mikhailsoldatkin/auth/internal/repository/user/pg/model"
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 	"github.com/mikhailsoldatkin/platform_common/pkg/db"

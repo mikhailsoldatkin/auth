@@ -5,7 +5,7 @@ import (
 	"log"
 
 	logRepository "github.com/mikhailsoldatkin/auth/internal/repository/log"
-	userRepository "github.com/mikhailsoldatkin/auth/internal/repository/user"
+	userRepository "github.com/mikhailsoldatkin/auth/internal/repository/user/pg"
 	"github.com/mikhailsoldatkin/auth/internal/service"
 	userService "github.com/mikhailsoldatkin/auth/internal/service/user"
 	"github.com/mikhailsoldatkin/platform_common/pkg/db"
