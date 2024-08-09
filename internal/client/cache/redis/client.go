@@ -11,23 +11,23 @@ import (
 	"github.com/mikhailsoldatkin/auth/internal/config"
 )
 
-var _ cache.RedisClient = (*client)(nil)
+var _ cache.RedisClient = (*Client)(nil)
 
 type handler func(ctx context.Context, conn redis.Conn) error
 
-type client struct {
+type Client struct {
 	pool   *redis.Pool
 	config config.RedisConfig
 }
 
-func NewClient(pool *redis.Pool, config config.RedisConfig) *client {
-	return &client{
+func NewClient(pool *redis.Pool, config config.RedisConfig) *Client {
+	return &Client{
 		pool:   pool,
 		config: config,
 	}
 }
 
-func (c *client) HashSet(ctx context.Context, key string, values interface{}) error {
+func (c *Client) HashSet(ctx context.Context, key string, values interface{}) error {
 	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
 		_, err := conn.Do("HSET", redis.Args{key}.AddFlat(values)...)
 		if err != nil {
@@ -43,7 +43,7 @@ func (c *client) HashSet(ctx context.Context, key string, values interface{}) er
 	return nil
 }
 
-func (c *client) Set(ctx context.Context, key string, value interface{}) error {
+func (c *Client) Set(ctx context.Context, key string, value interface{}) error {
 	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
 		_, err := conn.Do("SET", redis.Args{key}.Add(value)...)
 		if err != nil {
@@ -59,7 +59,7 @@ func (c *client) Set(ctx context.Context, key string, value interface{}) error {
 	return nil
 }
 
-func (c *client) HGetAll(ctx context.Context, key string) ([]interface{}, error) {
+func (c *Client) HGetAll(ctx context.Context, key string) ([]interface{}, error) {
 	var values []interface{}
 	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
 		var errEx error
@@ -77,7 +77,7 @@ func (c *client) HGetAll(ctx context.Context, key string) ([]interface{}, error)
 	return values, nil
 }
 
-func (c *client) Get(ctx context.Context, key string) (interface{}, error) {
+func (c *Client) Get(ctx context.Context, key string) (interface{}, error) {
 	var value interface{}
 	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
 		var errEx error
@@ -95,7 +95,7 @@ func (c *client) Get(ctx context.Context, key string) (interface{}, error) {
 	return value, nil
 }
 
-func (c *client) Expire(ctx context.Context, key string, expiration time.Duration) error {
+func (c *Client) Expire(ctx context.Context, key string, expiration time.Duration) error {
 	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
 		_, err := conn.Do("EXPIRE", key, int(expiration.Seconds()))
 		if err != nil {
@@ -111,7 +111,7 @@ func (c *client) Expire(ctx context.Context, key string, expiration time.Duratio
 	return nil
 }
 
-func (c *client) Ping(ctx context.Context) error {
+func (c *Client) Ping(ctx context.Context) error {
 	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
 		_, err := conn.Do("PING")
 		if err != nil {
@@ -127,7 +127,7 @@ func (c *client) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (c *client) execute(ctx context.Context, handler handler) error {
+func (c *Client) execute(ctx context.Context, handler handler) error {
 	conn, err := c.getConnect(ctx)
 	if err != nil {
 		return err
@@ -147,8 +147,8 @@ func (c *client) execute(ctx context.Context, handler handler) error {
 	return nil
 }
 
-func (c *client) getConnect(ctx context.Context) (redis.Conn, error) {
-	getConnTimeoutCtx, cancel := context.WithTimeout(ctx, c.config.ConnectionTimeout())
+func (c *Client) getConnect(ctx context.Context) (redis.Conn, error) {
+	getConnTimeoutCtx, cancel := context.WithTimeout(ctx, time.Duration(c.config.RedisConnTimeout))
 	defer cancel()
 
 	conn, err := c.pool.GetContext(getConnTimeoutCtx)
