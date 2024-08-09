@@ -25,11 +25,21 @@ type GRPCConfig struct {
 	GRPCPort int `env:"GRPC_PORT" env-required:"true"`
 }
 
+// RedisConfig represents configuration for Redis.
+type RedisConfig struct {
+	RedisHost        string `env:"REDIS_HOST" env-required:"true"`
+	RedisPort        string `env:"REDIS_PORT" env-required:"true"`
+	RedisConnTimeout string `env:"REDIS_CONNECTION_TIMEOUT_SEC" env-required:"true"`
+	RedisMaxIdle     string `env:"REDIS_MAX_IDLE" env-required:"true"`
+	RedisIdleTimeout string `env:"REDIS_IDLE_TIMEOUT_SEC" env-required:"true"`
+}
+
 // Config represents the overall application configuration.
 type Config struct {
 	AppName  string `env:"APP_NAME" env-required:"true"`
 	Database DatabaseConfig
 	GRPC     GRPCConfig
+	Redis    RedisConfig
 }
 
 // Load reads configuration from .env file.
