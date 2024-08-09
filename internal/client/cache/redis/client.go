@@ -15,6 +15,7 @@ var _ cache.RedisClient = (*Client)(nil)
 
 type handler func(ctx context.Context, conn redis.Conn) error
 
+// Client ...
 type Client struct {
 	pool   *redis.Pool
 	config config.RedisConfig
