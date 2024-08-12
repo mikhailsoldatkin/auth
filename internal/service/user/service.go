@@ -57,6 +57,7 @@ func NewMockService(deps ...any) service.UserService {
 		switch s := v.(type) {
 		case repository.UserRepository:
 			srv.pgRepository = s
+			srv.redisRepository = s
 		}
 	}
 
