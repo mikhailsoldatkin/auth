@@ -5,6 +5,7 @@ import (
 
 	modelRepo "github.com/mikhailsoldatkin/auth/internal/repository/user/redis/model"
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
+	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 )
 
 // ToServiceFromRepo converter from Redis repository User model to service User model.
@@ -16,6 +17,30 @@ func ToServiceFromRepo(user *modelRepo.User) *model.User {
 		Role:      user.Role,
 		CreatedAt: time.Unix(0, user.CreatedAtNs),
 		UpdatedAt: time.Unix(0, user.UpdatedAtNs),
+	}
+}
+
+// ToRepoFromService converter from service User model to Redis repository User model.
+func ToRepoFromService(user *model.User) *modelRepo.User {
+	return &modelRepo.User{
+		ID:          user.ID,
+		Name:        user.Name,
+		Email:       user.Email,
+		Role:        user.Role,
+		CreatedAtNs: time.Now().UnixNano(),
+		UpdatedAtNs: time.Now().UnixNano(),
+	}
+}
+
+// ToRepoFromProtobuf converter from protobuf User to Redis repository User model.
+func ToRepoFromProtobuf(user *pb.UpdateRequest) *modelRepo.User {
+	return &modelRepo.User{
+		ID:          user.Id,
+		Name:        user.Name.String(),
+		Email:       user.Email.String(),
+		Role:        user.Role.String(),
+		CreatedAtNs: time.Now().UnixNano(),
+		UpdatedAtNs: time.Now().UnixNano(),
 	}
 }
 

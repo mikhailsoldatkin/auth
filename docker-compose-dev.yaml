@@ -29,5 +29,15 @@ services:
     container_name: ${MIGRATOR_NAME}
     restart: on-failure
 
+  redis:
+    image: redis:7.4.0-alpine3.20
+    container_name: ${APP_NAME}_redis
+    ports:
+      - ${REDIS_HOST_PORT}:${REDIS_PORT}
+    volumes:
+      - redisdata:/data
+    restart: unless-stopped
+
 volumes:
   pgdata:
+  redisdata:

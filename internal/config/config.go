@@ -15,23 +15,25 @@ type DatabaseConfig struct {
 	PostgresDB       string `env:"POSTGRES_DB" env-required:"true"`
 	PostgresUser     string `env:"POSTGRES_USER" env-required:"true"`
 	PostgresPassword string `env:"POSTGRES_PASSWORD" env-required:"true"`
-	DbHost           string `env:"DB_HOST" env-required:"true"`
-	DbPort           int    `env:"DB_PORT" env-required:"true"`
+	Host             string `env:"DB_HOST" env-required:"true"`
+	Port             int    `env:"DB_PORT" env-required:"true"`
 	PostgresDSN      string `env:"-"`
 }
 
 // GRPCConfig represents the configuration for the gRPC server.
 type GRPCConfig struct {
-	GRPCPort int `env:"GRPC_PORT" env-required:"true"`
+	Port int `env:"GRPC_PORT" env-required:"true"`
 }
 
 // RedisConfig represents configuration for Redis.
 type RedisConfig struct {
-	RedisHost        string `env:"REDIS_HOST" env-required:"true"`
-	RedisPort        int    `env:"REDIS_PORT" env-required:"true"`
-	RedisConnTimeout int    `env:"REDIS_CONNECTION_TIMEOUT_SEC" env-required:"true"`
-	RedisMaxIdle     int    `env:"REDIS_MAX_IDLE" env-required:"true"`
-	RedisIdleTimeout int    `env:"REDIS_IDLE_TIMEOUT_SEC" env-required:"true"`
+	Host        string `env:"REDIS_HOST" env-required:"true"`
+	Port        int    `env:"REDIS_PORT" env-required:"true"`
+	ConnTimeout int    `env:"REDIS_CONNECTION_TIMEOUT_SEC" env-required:"true"`
+	MaxIdle     int    `env:"REDIS_MAX_IDLE" env-required:"true"`
+	MaxActive   int    `env:"REDIS_MAX_ACTIVE" env-required:"true"`
+	IdleTimeout int    `env:"REDIS_IDLE_TIMEOUT_SEC" env-required:"true"`
+	Address     string `env:"-"`
 }
 
 // Config represents the overall application configuration.
@@ -59,12 +61,14 @@ func Load() (*Config, error) {
 
 	cfg.Database.PostgresDSN = fmt.Sprintf(
 		"host=%s port=%d dbname=%s user=%s password=%s sslmode=disable",
-		cfg.Database.DbHost,
-		cfg.Database.DbPort,
+		cfg.Database.Host,
+		cfg.Database.Port,
 		cfg.Database.PostgresDB,
 		cfg.Database.PostgresUser,
 		cfg.Database.PostgresPassword,
 	)
+
+	cfg.Redis.Address = fmt.Sprintf("%s:%d", cfg.Redis.Host, cfg.Redis.Port)
 
 	return &cfg, nil
 }

@@ -37,6 +37,7 @@ func (c *Client) HashSet(ctx context.Context, key string, values interface{}) er
 
 		return nil
 	})
+
 	if err != nil {
 		return err
 	}
@@ -53,6 +54,7 @@ func (c *Client) Set(ctx context.Context, key string, value interface{}) error {
 
 		return nil
 	})
+
 	if err != nil {
 		return err
 	}
@@ -71,6 +73,7 @@ func (c *Client) HGetAll(ctx context.Context, key string) ([]interface{}, error)
 
 		return nil
 	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -89,6 +92,7 @@ func (c *Client) Get(ctx context.Context, key string) (interface{}, error) {
 
 		return nil
 	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -105,6 +109,20 @@ func (c *Client) Expire(ctx context.Context, key string, expiration time.Duratio
 
 		return nil
 	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Client) Delete(ctx context.Context, key string) error {
+	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
+		_, err := conn.Do("DEL", key)
+		return err
+	})
+
 	if err != nil {
 		return err
 	}
@@ -121,6 +139,7 @@ func (c *Client) Ping(ctx context.Context) error {
 
 		return nil
 	})
+
 	if err != nil {
 		return err
 	}
@@ -149,12 +168,12 @@ func (c *Client) execute(ctx context.Context, handler handler) error {
 }
 
 func (c *Client) getConnect(ctx context.Context) (redis.Conn, error) {
-	getConnTimeoutCtx, cancel := context.WithTimeout(ctx, time.Duration(c.config.RedisConnTimeout))
+	getConnTimeoutCtx, cancel := context.WithTimeout(ctx, time.Duration(c.config.ConnTimeout))
 	defer cancel()
 
 	conn, err := c.pool.GetContext(getConnTimeoutCtx)
 	if err != nil {
-		log.Printf("failed to get redis connection: %v\n", err)
+		log.Printf("failed to get Redis connection: %v\n", err)
 
 		_ = conn.Close()
 		return nil, err

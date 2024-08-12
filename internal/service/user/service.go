@@ -11,21 +11,24 @@ import (
 var _ service.UserService = (*serv)(nil)
 
 type serv struct {
-	userRepository repository.UserRepository
-	logRepository  repository.LogRepository
-	txManager      db.TxManager
+	pgRepository    repository.UserRepository
+	redisRepository repository.UserRepository
+	logRepository   repository.LogRepository
+	txManager       db.TxManager
 }
 
 // NewService creates a new instance of the user service.
 func NewService(
-	userRepository repository.UserRepository,
+	pgRepository repository.UserRepository,
+	redisRepository repository.UserRepository,
 	logRepository repository.LogRepository,
 	txManager db.TxManager,
 ) service.UserService {
 	return &serv{
-		userRepository: userRepository,
-		logRepository:  logRepository,
-		txManager:      txManager,
+		pgRepository:    pgRepository,
+		redisRepository: redisRepository,
+		logRepository:   logRepository,
+		txManager:       txManager,
 	}
 }
 
@@ -53,7 +56,7 @@ func NewMockService(deps ...any) service.UserService {
 	for _, v := range deps {
 		switch s := v.(type) {
 		case repository.UserRepository:
-			srv.userRepository = s
+			srv.pgRepository = s
 		}
 	}
 

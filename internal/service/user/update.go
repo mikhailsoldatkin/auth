@@ -8,9 +8,10 @@ import (
 )
 
 // Update modifies an existing user's data based on the provided update request and logs the operation.
+// It updates the user data in the database, then synchronizes data in cache.
 func (s *serv) Update(ctx context.Context, req *pb.UpdateRequest) error {
 	err := s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
-		errTx := s.userRepository.Update(ctx, req)
+		errTx := s.pgRepository.Update(ctx, req)
 		if errTx != nil {
 			return errTx
 		}
@@ -23,5 +24,14 @@ func (s *serv) Update(ctx context.Context, req *pb.UpdateRequest) error {
 		return nil
 	})
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	err = s.redisRepository.Update(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to update user %d in cache: %v", req.GetId(), err)
+	}
+
+	return nil
 }
