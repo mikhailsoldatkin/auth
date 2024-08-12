@@ -85,7 +85,7 @@ func (r *repo) Update(ctx context.Context, req *pb.UpdateRequest) error {
 }
 
 // List retrieves all users from Redis based on the provided ListRequest.
-func (r *repo) List(ctx context.Context, req *pb.ListRequest) ([]*model.User, error) {
+func (r *repo) List(_ context.Context, _ *pb.ListRequest) ([]*model.User, error) {
 
 	// var users []*model.User
 
