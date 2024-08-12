@@ -36,8 +36,8 @@ func ToRepoFromService(user *model.User) *modelRepo.User {
 func ToRepoFromProtobuf(user *pb.UpdateRequest) *modelRepo.User {
 	return &modelRepo.User{
 		ID:          user.Id,
-		Name:        user.Name.String(),
-		Email:       user.Email.String(),
+		Name:        user.Name.GetValue(),
+		Email:       user.Email.GetValue(),
 		Role:        user.Role.String(),
 		CreatedAtNs: time.Now().UnixNano(),
 		UpdatedAtNs: time.Now().UnixNano(),
