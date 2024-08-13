@@ -15,12 +15,13 @@ var _ cache.RedisClient = (*Client)(nil)
 
 type handler func(ctx context.Context, conn redis.Conn) error
 
-// Client ...
+// Client represents a Redis client that interacts with a Redis database using a connection pool.
 type Client struct {
 	pool   *redis.Pool
 	config config.RedisConfig
 }
 
+// NewClient creates a new instance of Client with the provided Redis connection pool and configuration.
 func NewClient(pool *redis.Pool, config config.RedisConfig) *Client {
 	return &Client{
 		pool:   pool,
@@ -28,13 +29,13 @@ func NewClient(pool *redis.Pool, config config.RedisConfig) *Client {
 	}
 }
 
+// HashSet sets multiple fields in a Redis hash stored at key.
 func (c *Client) HashSet(ctx context.Context, key string, values interface{}) error {
 	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
 		_, err := conn.Do("HSET", redis.Args{key}.AddFlat(values)...)
 		if err != nil {
 			return err
 		}
-
 		return nil
 	})
 
@@ -45,13 +46,13 @@ func (c *Client) HashSet(ctx context.Context, key string, values interface{}) er
 	return nil
 }
 
+// Set sets the value of a key in Redis.
 func (c *Client) Set(ctx context.Context, key string, value interface{}) error {
 	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
 		_, err := conn.Do("SET", redis.Args{key}.Add(value)...)
 		if err != nil {
 			return err
 		}
-
 		return nil
 	})
 
@@ -62,6 +63,7 @@ func (c *Client) Set(ctx context.Context, key string, value interface{}) error {
 	return nil
 }
 
+// HGetAll retrieves all fields and values of a Redis hash stored at key.
 func (c *Client) HGetAll(ctx context.Context, key string) ([]interface{}, error) {
 	var values []interface{}
 	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
@@ -70,7 +72,6 @@ func (c *Client) HGetAll(ctx context.Context, key string) ([]interface{}, error)
 		if errEx != nil {
 			return errEx
 		}
-
 		return nil
 	})
 
@@ -81,6 +82,7 @@ func (c *Client) HGetAll(ctx context.Context, key string) ([]interface{}, error)
 	return values, nil
 }
 
+// Get retrieves the value of a key in Redis.
 func (c *Client) Get(ctx context.Context, key string) (interface{}, error) {
 	var value interface{}
 	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
@@ -89,7 +91,6 @@ func (c *Client) Get(ctx context.Context, key string) (interface{}, error) {
 		if errEx != nil {
 			return errEx
 		}
-
 		return nil
 	})
 
@@ -100,13 +101,14 @@ func (c *Client) Get(ctx context.Context, key string) (interface{}, error) {
 	return value, nil
 }
 
+// Expire sets a timeout on the specified key in Redis.
+// The key will be automatically deleted after the specified expiration duration.
 func (c *Client) Expire(ctx context.Context, key string, expiration time.Duration) error {
 	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
 		_, err := conn.Do("EXPIRE", key, int(expiration.Seconds()))
 		if err != nil {
 			return err
 		}
-
 		return nil
 	})
 
@@ -117,6 +119,7 @@ func (c *Client) Expire(ctx context.Context, key string, expiration time.Duratio
 	return nil
 }
 
+// Delete removes the specified key from Redis.
 func (c *Client) Delete(ctx context.Context, key string) error {
 	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
 		_, err := conn.Do("DEL", key)
@@ -130,13 +133,13 @@ func (c *Client) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
+// Ping checks the connection to the Redis server.
 func (c *Client) Ping(ctx context.Context) error {
 	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
 		_, err := conn.Do("PING")
 		if err != nil {
 			return err
 		}
-
 		return nil
 	})
 
@@ -147,6 +150,27 @@ func (c *Client) Ping(ctx context.Context) error {
 	return nil
 }
 
+// Keys retrieves all keys matching the specified pattern.
+func (c *Client) Keys(ctx context.Context, pattern string) ([]string, error) {
+	var keys []string
+	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
+		var errEx error
+		keys, errEx = redis.Strings(conn.Do("KEYS", pattern))
+		if errEx != nil {
+			return errEx
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return keys, nil
+}
+
+// execute is a helper method that wraps Redis operations with connection management and error handling.
 func (c *Client) execute(ctx context.Context, handler handler) error {
 	conn, err := c.getConnect(ctx)
 	if err != nil {
@@ -167,6 +191,7 @@ func (c *Client) execute(ctx context.Context, handler handler) error {
 	return nil
 }
 
+// getConnect retrieves a Redis connection from the connection pool, respecting the context's timeout.
 func (c *Client) getConnect(ctx context.Context) (redis.Conn, error) {
 	getConnTimeoutCtx, cancel := context.WithTimeout(ctx, time.Duration(c.config.ConnTimeout))
 	defer cancel()
@@ -174,7 +199,6 @@ func (c *Client) getConnect(ctx context.Context) (redis.Conn, error) {
 	conn, err := c.pool.GetContext(getConnTimeoutCtx)
 	if err != nil {
 		log.Printf("failed to get Redis connection: %v\n", err)
-
 		_ = conn.Close()
 		return nil, err
 	}

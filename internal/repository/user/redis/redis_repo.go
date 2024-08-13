@@ -2,6 +2,8 @@ package redis
 
 import (
 	"context"
+	"fmt"
+	"sort"
 	"strconv"
 
 	redigo "github.com/gomodule/redigo/redis"
@@ -16,7 +18,8 @@ import (
 )
 
 const (
-	userEntity = "user"
+	userEntity      = "user"
+	defaultPageSize = 10
 )
 
 type repo struct {
@@ -85,9 +88,54 @@ func (r *repo) Update(ctx context.Context, req *pb.UpdateRequest) error {
 }
 
 // List retrieves all users from Redis based on the provided ListRequest.
-func (r *repo) List(_ context.Context, _ *pb.ListRequest) ([]*model.User, error) {
+func (r *repo) List(ctx context.Context, req *pb.ListRequest) ([]*model.User, error) {
+	ids, err := r.cl.Keys(ctx, "*")
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve ids: %w", err)
+	}
 
-	// var users []*model.User
+	sort.Strings(ids)
 
-	return nil, nil
+	offset := int(req.Offset)
+	limit := int(req.Limit)
+
+	if limit == 0 {
+		limit = defaultPageSize
+	}
+	if offset >= len(ids) {
+		return nil, nil
+	}
+
+	end := offset + limit
+	if end > len(ids) {
+		end = len(ids)
+	}
+
+	selectedIDs := ids[offset:end]
+
+	var users []*model.User
+	for _, id := range selectedIDs {
+		values, errGet := r.cl.HGetAll(ctx, id)
+		if errGet != nil {
+			return nil, errGet
+		}
+
+		if len(values) == 0 {
+			userID, errConv := strconv.Atoi(id)
+			if errConv != nil {
+				return nil, errConv
+			}
+			return nil, customerrors.NewErrNotFound(userEntity, int64(userID))
+		}
+
+		var user repoModel.User
+		err = redigo.ScanStruct(values, &user)
+		if err != nil {
+			return nil, err
+		}
+
+		users = append(users, converter.ToServiceFromRepo(&user))
+	}
+
+	return users, nil
 }
