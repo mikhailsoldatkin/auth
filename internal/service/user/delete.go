@@ -18,7 +18,7 @@ func (s *serv) Delete(ctx context.Context, id int64) error {
 		return fmt.Errorf("failed to delete user %d from cache: %v", id, err)
 	}
 
-	err = s.logRepository.Log(ctx, id, fmt.Sprintf("user %d deleted", id))
+	err = s.logRepository.Log(ctx, 0, fmt.Sprintf("user %d deleted", id))
 	if err != nil {
 		return err
 	}
