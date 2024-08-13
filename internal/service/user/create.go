@@ -22,17 +22,17 @@ func (s *serv) Create(ctx context.Context, user *model.User) (int64, error) {
 			return errTx
 		}
 
+		user.ID = id
+		_, errTx = s.redisRepository.Create(ctx, user)
+		if errTx != nil {
+			return fmt.Errorf("failed to cache user with ID %d: %v", id, errTx)
+		}
+
 		return nil
 	})
 
 	if err != nil {
 		return 0, err
-	}
-
-	user.ID = id
-	_, err = s.redisRepository.Create(ctx, user)
-	if err != nil {
-		return 0, fmt.Errorf("failed to cache user with ID %d: %v", id, err)
 	}
 
 	return id, nil

@@ -16,9 +16,14 @@ func (s *serv) Update(ctx context.Context, req *pb.UpdateRequest) error {
 			return errTx
 		}
 
-		errTx = s.logRepository.Log(ctx, req.GetId(), fmt.Sprintf("user with ID %d updated", req.GetId()))
+		errTx = s.logRepository.Log(ctx, req.GetId(), fmt.Sprintf("user %d updated", req.GetId()))
 		if errTx != nil {
 			return errTx
+		}
+
+		errTx = s.redisRepository.Update(ctx, req)
+		if errTx != nil {
+			return fmt.Errorf("failed to update user %d in cache: %v", req.GetId(), errTx)
 		}
 
 		return nil
@@ -26,11 +31,6 @@ func (s *serv) Update(ctx context.Context, req *pb.UpdateRequest) error {
 
 	if err != nil {
 		return err
-	}
-
-	err = s.redisRepository.Update(ctx, req)
-	if err != nil {
-		return fmt.Errorf("failed to update user %d in cache: %v", req.GetId(), err)
 	}
 
 	return nil

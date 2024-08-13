@@ -22,7 +22,7 @@ func (s *serv) Get(ctx context.Context, id int64) (*model.User, error) {
 
 	_, err = s.redisRepository.Create(ctx, user)
 	if err != nil {
-		return nil, fmt.Errorf("failed to cache user with ID %d: %v", id, err)
+		return nil, fmt.Errorf("failed to cache user %d: %v", id, err)
 	}
 
 	return user, nil
