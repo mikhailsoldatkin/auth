@@ -19,6 +19,13 @@ env:
   MIGRATIONS_DIR: ./migrations
   GO_VERSION: 1.22
 
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  REDIS_CONNECTION_TIMEOUT_SEC: 5
+  REDIS_MAX_IDLE: 10
+  REDIS_MAX_ACTIVE: 10
+  REDIS_IDLE_TIMEOUT_SEC: 300
+
 jobs:
   build-and-test:
     name: Build and test
@@ -76,6 +83,14 @@ jobs:
           echo DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }} >> .env
           echo APP_NAME=${{ env.APP_NAME }} >> .env
           echo MIGRATOR_NAME=${{ env.MIGRATOR_NAME }} >> .env
+          
+          echo REDIS_HOST=${{ env.REDIS_HOST }} >> .env
+          echo REDIS_HOST_PORT=${{ secrets.REDIS_HOST_PORT }} >> .env
+          echo REDIS_PORT=${{ env.REDIS_PORT }} >> .env
+          echo REDIS_CONNECTION_TIMEOUT_SEC=${{ env.REDIS_CONNECTION_TIMEOUT_SEC }} >> .env
+          echo REDIS_MAX_IDLE=${{ env.REDIS_MAX_IDLE }} >> .env
+          echo REDIS_MAX_ACTIVE=${{ env.REDIS_MAX_ACTIVE }} >> .env
+          echo REDIS_IDLE_TIMEOUT_SEC=${{ env.REDIS_IDLE_TIMEOUT_SEC }} >> .env
 
       - name: Upload .env file as artifact
         uses: actions/upload-artifact@v4.3.4
