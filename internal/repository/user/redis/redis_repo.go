@@ -6,12 +6,12 @@ import (
 	"strconv"
 
 	redigo "github.com/gomodule/redigo/redis"
-	"github.com/mikhailsoldatkin/auth/internal/client/cache"
 	"github.com/mikhailsoldatkin/auth/internal/customerrors"
 	"github.com/mikhailsoldatkin/auth/internal/repository"
 	"github.com/mikhailsoldatkin/auth/internal/repository/user/redis/converter"
 	repoModel "github.com/mikhailsoldatkin/auth/internal/repository/user/redis/model"
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
+	"github.com/mikhailsoldatkin/platform_common/pkg/cache"
 )
 
 const (

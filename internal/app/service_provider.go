@@ -6,13 +6,13 @@ import (
 	"time"
 
 	redigo "github.com/gomodule/redigo/redis"
-	"github.com/mikhailsoldatkin/auth/internal/client/cache"
-	"github.com/mikhailsoldatkin/auth/internal/client/cache/redis"
 	logRepository "github.com/mikhailsoldatkin/auth/internal/repository/log"
 	pgRepository "github.com/mikhailsoldatkin/auth/internal/repository/user/pg"
 	redisRepository "github.com/mikhailsoldatkin/auth/internal/repository/user/redis"
 	"github.com/mikhailsoldatkin/auth/internal/service"
 	userService "github.com/mikhailsoldatkin/auth/internal/service/user"
+	"github.com/mikhailsoldatkin/platform_common/pkg/cache"
+	"github.com/mikhailsoldatkin/platform_common/pkg/cache/redis"
 	"github.com/mikhailsoldatkin/platform_common/pkg/db"
 	"github.com/mikhailsoldatkin/platform_common/pkg/db/pg"
 	"github.com/mikhailsoldatkin/platform_common/pkg/db/transaction"
@@ -109,7 +109,7 @@ func (s *serviceProvider) RedisPool() *redigo.Pool {
 
 func (s *serviceProvider) RedisClient(ctx context.Context) cache.RedisClient {
 	if s.redisClient == nil {
-		cl := redis.NewClient(s.RedisPool(), s.config.Redis)
+		cl := redis.NewClient(s.RedisPool(), redis.Config(s.config.Redis))
 
 		if err := cl.Ping(ctx); err != nil {
 			log.Fatalf("failed to ping Redis: %v", err)
