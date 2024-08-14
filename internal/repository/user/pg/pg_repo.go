@@ -3,7 +3,6 @@ package pg
 import (
 	"context"
 	"errors"
-	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4"
@@ -39,7 +38,6 @@ func NewRepository(db db.Client) repository.UserRepository {
 
 // Create inserts a new user into the database.
 func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
-	currentTime := time.Now()
 	builder := sq.Insert(tableUsers).
 		PlaceholderFormat(sq.Dollar).
 		Columns(
@@ -49,7 +47,7 @@ func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
 			columnCreatedAt,
 			columnUpdatedAt,
 		).
-		Values(user.Name, user.Email, user.Role, currentTime, currentTime).
+		Values(user.Name, user.Email, user.Role, user.CreatedAt, user.UpdatedAt).
 		Suffix("RETURNING id")
 
 	query, args, err := builder.ToSql()
@@ -133,17 +131,7 @@ func (r *repo) Delete(ctx context.Context, id int64) error {
 
 // Update modifies an existing user in the database.
 func (r *repo) Update(ctx context.Context, updates *model.User) error {
-	updateFields := make(map[string]any)
-
-	if updates.Name != "" {
-		updateFields[columnName] = updates.Name
-	}
-	if updates.Email != "" {
-		updateFields[columnEmail] = updates.Email
-	}
-	if updates.Role != "" {
-		updateFields[columnRole] = updates.Role
-	}
+	updateFields := converter.FromServiceToRepoUpdate(updates)
 
 	builder := sq.Update(tableUsers).
 		SetMap(updateFields).

@@ -17,5 +17,5 @@ type UserRepository interface {
 
 // LogRepository defines the interface for logging database operations.
 type LogRepository interface {
-	Log(ctx context.Context, userID int64, details string) error
+	Log(ctx context.Context, id int64, details string) error
 }

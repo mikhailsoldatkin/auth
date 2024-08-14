@@ -30,7 +30,7 @@ func NewRepository(cl cache.RedisClient) repository.UserRepository {
 // Create stores a new user in Redis and returns user's ID.
 func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
 	key := strconv.FormatInt(user.ID, 10)
-	err := r.cl.HashSet(ctx, key, converter.FromServiceToRepo(user, true))
+	err := r.cl.HashSet(ctx, key, converter.FromServiceToRepo(user))
 	if err != nil {
 		return 0, err
 	}
@@ -72,8 +72,10 @@ func (r *repo) Delete(ctx context.Context, id int64) error {
 
 // Update modifies an existing user's data in Redis based on the provided user data.
 func (r *repo) Update(ctx context.Context, updates *model.User) error {
+	updateFields := converter.FromServiceToRepoUpdate(updates)
+
 	key := strconv.FormatInt(updates.ID, 10)
-	err := r.cl.HashSet(ctx, key, converter.FromServiceToRepo(updates, false))
+	err := r.cl.HashSet(ctx, key, updateFields)
 	if err != nil {
 		return err
 	}

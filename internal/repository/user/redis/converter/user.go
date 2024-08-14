@@ -1,11 +1,18 @@
 package converter
 
 import (
-	"log"
 	"time"
 
 	modelRepo "github.com/mikhailsoldatkin/auth/internal/repository/user/redis/model"
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
+	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
+)
+
+const (
+	fieldName      = "name"
+	fieldEmail     = "email"
+	fieldRole      = "role"
+	fieldUpdatedAt = "updated_at"
 )
 
 // FromRepoToService converter from Redis repository User model to service User model.
@@ -21,27 +28,34 @@ func FromRepoToService(user *modelRepo.User) *model.User {
 }
 
 // FromServiceToRepo converter from service User model to Redis repository User model.
-// If createNew is true, it sets both CreatedAtNs and UpdatedAtNs. Otherwise, it only sets UpdatedAtNs.
-func FromServiceToRepo(user *model.User, createNew bool) *modelRepo.User {
+func FromServiceToRepo(user *model.User) *modelRepo.User {
 	now := time.Now().UnixNano()
-
-	log.Printf("user.CreatedAt = %v", user.CreatedAt)
-	log.Printf("user.UpdatedAt = %v", user.UpdatedAt)
-
 	repoUser := &modelRepo.User{
-		ID:    user.ID,
-		Name:  user.Name,
-		Email: user.Email,
-		Role:  user.Role,
-	}
-
-	if createNew {
-		repoUser.CreatedAtNs = now
-		repoUser.UpdatedAtNs = now
-	} else {
-		repoUser.CreatedAtNs = user.CreatedAt.UnixNano()
-		repoUser.UpdatedAtNs = now
+		ID:          user.ID,
+		Name:        user.Name,
+		Email:       user.Email,
+		Role:        user.Role,
+		CreatedAtNs: now,
+		UpdatedAtNs: now,
 	}
 
 	return repoUser
+}
+
+// FromServiceToRepoUpdate converts a service User model to a Redis update map.
+func FromServiceToRepoUpdate(updates *model.User) map[string]any {
+	updateFields := make(map[string]any)
+
+	if updates.Name != "" {
+		updateFields[fieldName] = updates.Name
+	}
+	if updates.Email != "" {
+		updateFields[fieldEmail] = updates.Email
+	}
+	if updates.Role != pb.Role_UNKNOWN.String() {
+		updateFields[fieldRole] = updates.Role
+	}
+	updateFields[fieldUpdatedAt] = updates.UpdatedAt.UnixNano()
+
+	return updateFields
 }
