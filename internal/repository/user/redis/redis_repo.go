@@ -83,6 +83,6 @@ func (r *repo) Update(ctx context.Context, updates *model.User) error {
 }
 
 // List retrieves all users from Redis based on the provided limit and offset.
-func (r *repo) List(ctx context.Context, limit, offset int64) ([]*model.User, error) {
+func (r *repo) List(_ context.Context, _, _ int64) ([]*model.User, error) {
 	return nil, errors.New("list method not implemented")
 }

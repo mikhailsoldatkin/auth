@@ -100,7 +100,7 @@ func TestList(t *testing.T) {
 			err:  nil,
 			userServiceMock: func(mc *minimock.Controller) service.UserService {
 				mock := serviceMocks.NewUserServiceMock(mc)
-				mock.ListMock.Expect(ctx, req).Return(wantUsers, nil)
+				mock.ListMock.Expect(ctx, req.Limit, req.Offset).Return(wantUsers, nil)
 				return mock
 			},
 		},
@@ -114,7 +114,7 @@ func TestList(t *testing.T) {
 			err:  customerrors.ConvertError(wantErr),
 			userServiceMock: func(mc *minimock.Controller) service.UserService {
 				mock := serviceMocks.NewUserServiceMock(mc)
-				mock.ListMock.Expect(ctx, req).Return(nil, wantErr)
+				mock.ListMock.Expect(ctx, req.Limit, req.Offset).Return(nil, wantErr)
 				return mock
 			},
 		},

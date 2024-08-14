@@ -11,6 +11,7 @@ import (
 	"github.com/mikhailsoldatkin/auth/internal/customerrors"
 	"github.com/mikhailsoldatkin/auth/internal/service"
 	serviceMocks "github.com/mikhailsoldatkin/auth/internal/service/mocks"
+	"github.com/mikhailsoldatkin/auth/internal/service/user/converter"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -46,8 +47,7 @@ func TestUpdate(t *testing.T) {
 			Name:  wrapperspb.String(name),
 			Email: wrapperspb.String(invalidEmail),
 		}
-		wantResp = &emptypb.Empty{}
-
+		wantResp     = &emptypb.Empty{}
 		wantErr      = fmt.Errorf("service error")
 		wantEmailErr = status.Errorf(codes.InvalidArgument, "invalid email format: %v", invalidEmail)
 	)
@@ -69,7 +69,7 @@ func TestUpdate(t *testing.T) {
 			err:  nil,
 			userServiceMock: func(mc *minimock.Controller) service.UserService {
 				mock := serviceMocks.NewUserServiceMock(mc)
-				mock.UpdateMock.Expect(ctx, validReq).Return(nil)
+				mock.UpdateMock.Expect(ctx, converter.FromProtobufToServiceUpdate(validReq)).Return(nil)
 				return mock
 			},
 		},
@@ -96,7 +96,7 @@ func TestUpdate(t *testing.T) {
 			err:  customerrors.ConvertError(wantErr),
 			userServiceMock: func(mc *minimock.Controller) service.UserService {
 				mock := serviceMocks.NewUserServiceMock(mc)
-				mock.UpdateMock.Expect(ctx, validReq).Return(wantErr)
+				mock.UpdateMock.Expect(ctx, converter.FromProtobufToServiceUpdate(validReq)).Return(wantErr)
 				return mock
 			},
 		},

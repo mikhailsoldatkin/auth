@@ -11,7 +11,7 @@ import (
 	"github.com/mikhailsoldatkin/auth/internal/customerrors"
 	"github.com/mikhailsoldatkin/auth/internal/service"
 	serviceMocks "github.com/mikhailsoldatkin/auth/internal/service/mocks"
-	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
+	"github.com/mikhailsoldatkin/auth/internal/service/user/converter"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -62,11 +62,11 @@ func TestCreate(t *testing.T) {
 		wantResp = &pb.CreateResponse{
 			Id: id,
 		}
-		wantUser = &model.User{
-			Name:  name,
-			Email: email,
-			Role:  role,
-		}
+		//wantUser = &model.User{
+		//	Name:  name,
+		//	Email: email,
+		//	Role:  role,
+		//}
 		wantErr = fmt.Errorf("service error")
 	)
 
@@ -87,12 +87,13 @@ func TestCreate(t *testing.T) {
 			err:  nil,
 			userServiceMock: func(mc *minimock.Controller) service.UserService {
 				mock := serviceMocks.NewUserServiceMock(mc)
-				mock.CreateMock.Set(func(_ context.Context, user *model.User) (int64, error) {
-					require.Equal(t, wantUser.Name, user.Name)
-					require.Equal(t, wantUser.Email, user.Email)
-					require.Equal(t, wantUser.Role, user.Role)
-					return id, nil
-				})
+				//mock.CreateMock.Set(func(_ context.Context, user *model.User) (int64, error) {
+				//	require.Equal(t, wantUser.Name, user.Name)
+				//	require.Equal(t, wantUser.Email, user.Email)
+				//	require.Equal(t, wantUser.Role, user.Role)
+				//	return id, nil
+				//})
+				mock.CreateMock.Expect(ctx, converter.FromProtobufToServiceCreate(req)).Return(id, nil)
 				return mock
 			},
 		},
@@ -106,9 +107,7 @@ func TestCreate(t *testing.T) {
 			err:  customerrors.ConvertError(wantErr),
 			userServiceMock: func(mc *minimock.Controller) service.UserService {
 				mock := serviceMocks.NewUserServiceMock(mc)
-				mock.CreateMock.Set(func(_ context.Context, _ *model.User) (int64, error) {
-					return 0, wantErr
-				})
+				mock.CreateMock.Expect(ctx, converter.FromProtobufToServiceCreate(req)).Return(0, wantErr)
 				return mock
 			},
 		},

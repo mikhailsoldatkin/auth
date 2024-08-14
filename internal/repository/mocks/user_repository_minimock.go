@@ -12,7 +12,6 @@ import (
 
 	"github.com/gojuno/minimock/v3"
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
-	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 )
 
 // UserRepositoryMock implements repository.UserRepository
@@ -38,14 +37,14 @@ type UserRepositoryMock struct {
 	beforeGetCounter uint64
 	GetMock          mUserRepositoryMockGet
 
-	funcList          func(ctx context.Context, req *pb.ListRequest) (upa1 []*model.User, err error)
-	inspectFuncList   func(ctx context.Context, req *pb.ListRequest)
+	funcList          func(ctx context.Context, limit int64, offset int64) (upa1 []*model.User, err error)
+	inspectFuncList   func(ctx context.Context, limit int64, offset int64)
 	afterListCounter  uint64
 	beforeListCounter uint64
 	ListMock          mUserRepositoryMockList
 
-	funcUpdate          func(ctx context.Context, req *pb.UpdateRequest) (err error)
-	inspectFuncUpdate   func(ctx context.Context, req *pb.UpdateRequest)
+	funcUpdate          func(ctx context.Context, updates *model.User) (err error)
+	inspectFuncUpdate   func(ctx context.Context, updates *model.User)
 	afterUpdateCounter  uint64
 	beforeUpdateCounter uint64
 	UpdateMock          mUserRepositoryMockUpdate
@@ -1064,14 +1063,16 @@ type UserRepositoryMockListExpectation struct {
 
 // UserRepositoryMockListParams contains parameters of the UserRepository.List
 type UserRepositoryMockListParams struct {
-	ctx context.Context
-	req *pb.ListRequest
+	ctx    context.Context
+	limit  int64
+	offset int64
 }
 
 // UserRepositoryMockListParamPtrs contains pointers to parameters of the UserRepository.List
 type UserRepositoryMockListParamPtrs struct {
-	ctx *context.Context
-	req **pb.ListRequest
+	ctx    *context.Context
+	limit  *int64
+	offset *int64
 }
 
 // UserRepositoryMockListResults contains results of the UserRepository.List
@@ -1091,7 +1092,7 @@ func (mmList *mUserRepositoryMockList) Optional() *mUserRepositoryMockList {
 }
 
 // Expect sets up expected params for UserRepository.List
-func (mmList *mUserRepositoryMockList) Expect(ctx context.Context, req *pb.ListRequest) *mUserRepositoryMockList {
+func (mmList *mUserRepositoryMockList) Expect(ctx context.Context, limit int64, offset int64) *mUserRepositoryMockList {
 	if mmList.mock.funcList != nil {
 		mmList.mock.t.Fatalf("UserRepositoryMock.List mock is already set by Set")
 	}
@@ -1104,7 +1105,7 @@ func (mmList *mUserRepositoryMockList) Expect(ctx context.Context, req *pb.ListR
 		mmList.mock.t.Fatalf("UserRepositoryMock.List mock is already set by ExpectParams functions")
 	}
 
-	mmList.defaultExpectation.params = &UserRepositoryMockListParams{ctx, req}
+	mmList.defaultExpectation.params = &UserRepositoryMockListParams{ctx, limit, offset}
 	for _, e := range mmList.expectations {
 		if minimock.Equal(e.params, mmList.defaultExpectation.params) {
 			mmList.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmList.defaultExpectation.params)
@@ -1136,8 +1137,8 @@ func (mmList *mUserRepositoryMockList) ExpectCtxParam1(ctx context.Context) *mUs
 	return mmList
 }
 
-// ExpectReqParam2 sets up expected param req for UserRepository.List
-func (mmList *mUserRepositoryMockList) ExpectReqParam2(req *pb.ListRequest) *mUserRepositoryMockList {
+// ExpectLimitParam2 sets up expected param limit for UserRepository.List
+func (mmList *mUserRepositoryMockList) ExpectLimitParam2(limit int64) *mUserRepositoryMockList {
 	if mmList.mock.funcList != nil {
 		mmList.mock.t.Fatalf("UserRepositoryMock.List mock is already set by Set")
 	}
@@ -1153,13 +1154,35 @@ func (mmList *mUserRepositoryMockList) ExpectReqParam2(req *pb.ListRequest) *mUs
 	if mmList.defaultExpectation.paramPtrs == nil {
 		mmList.defaultExpectation.paramPtrs = &UserRepositoryMockListParamPtrs{}
 	}
-	mmList.defaultExpectation.paramPtrs.req = &req
+	mmList.defaultExpectation.paramPtrs.limit = &limit
+
+	return mmList
+}
+
+// ExpectOffsetParam3 sets up expected param offset for UserRepository.List
+func (mmList *mUserRepositoryMockList) ExpectOffsetParam3(offset int64) *mUserRepositoryMockList {
+	if mmList.mock.funcList != nil {
+		mmList.mock.t.Fatalf("UserRepositoryMock.List mock is already set by Set")
+	}
+
+	if mmList.defaultExpectation == nil {
+		mmList.defaultExpectation = &UserRepositoryMockListExpectation{}
+	}
+
+	if mmList.defaultExpectation.params != nil {
+		mmList.mock.t.Fatalf("UserRepositoryMock.List mock is already set by Expect")
+	}
+
+	if mmList.defaultExpectation.paramPtrs == nil {
+		mmList.defaultExpectation.paramPtrs = &UserRepositoryMockListParamPtrs{}
+	}
+	mmList.defaultExpectation.paramPtrs.offset = &offset
 
 	return mmList
 }
 
 // Inspect accepts an inspector function that has same arguments as the UserRepository.List
-func (mmList *mUserRepositoryMockList) Inspect(f func(ctx context.Context, req *pb.ListRequest)) *mUserRepositoryMockList {
+func (mmList *mUserRepositoryMockList) Inspect(f func(ctx context.Context, limit int64, offset int64)) *mUserRepositoryMockList {
 	if mmList.mock.inspectFuncList != nil {
 		mmList.mock.t.Fatalf("Inspect function is already set for UserRepositoryMock.List")
 	}
@@ -1183,7 +1206,7 @@ func (mmList *mUserRepositoryMockList) Return(upa1 []*model.User, err error) *Us
 }
 
 // Set uses given function f to mock the UserRepository.List method
-func (mmList *mUserRepositoryMockList) Set(f func(ctx context.Context, req *pb.ListRequest) (upa1 []*model.User, err error)) *UserRepositoryMock {
+func (mmList *mUserRepositoryMockList) Set(f func(ctx context.Context, limit int64, offset int64) (upa1 []*model.User, err error)) *UserRepositoryMock {
 	if mmList.defaultExpectation != nil {
 		mmList.mock.t.Fatalf("Default expectation is already set for the UserRepository.List method")
 	}
@@ -1198,14 +1221,14 @@ func (mmList *mUserRepositoryMockList) Set(f func(ctx context.Context, req *pb.L
 
 // When sets expectation for the UserRepository.List which will trigger the result defined by the following
 // Then helper
-func (mmList *mUserRepositoryMockList) When(ctx context.Context, req *pb.ListRequest) *UserRepositoryMockListExpectation {
+func (mmList *mUserRepositoryMockList) When(ctx context.Context, limit int64, offset int64) *UserRepositoryMockListExpectation {
 	if mmList.mock.funcList != nil {
 		mmList.mock.t.Fatalf("UserRepositoryMock.List mock is already set by Set")
 	}
 
 	expectation := &UserRepositoryMockListExpectation{
 		mock:   mmList.mock,
-		params: &UserRepositoryMockListParams{ctx, req},
+		params: &UserRepositoryMockListParams{ctx, limit, offset},
 	}
 	mmList.expectations = append(mmList.expectations, expectation)
 	return expectation
@@ -1238,15 +1261,15 @@ func (mmList *mUserRepositoryMockList) invocationsDone() bool {
 }
 
 // List implements repository.UserRepository
-func (mmList *UserRepositoryMock) List(ctx context.Context, req *pb.ListRequest) (upa1 []*model.User, err error) {
+func (mmList *UserRepositoryMock) List(ctx context.Context, limit int64, offset int64) (upa1 []*model.User, err error) {
 	mm_atomic.AddUint64(&mmList.beforeListCounter, 1)
 	defer mm_atomic.AddUint64(&mmList.afterListCounter, 1)
 
 	if mmList.inspectFuncList != nil {
-		mmList.inspectFuncList(ctx, req)
+		mmList.inspectFuncList(ctx, limit, offset)
 	}
 
-	mm_params := UserRepositoryMockListParams{ctx, req}
+	mm_params := UserRepositoryMockListParams{ctx, limit, offset}
 
 	// Record call args
 	mmList.ListMock.mutex.Lock()
@@ -1265,7 +1288,7 @@ func (mmList *UserRepositoryMock) List(ctx context.Context, req *pb.ListRequest)
 		mm_want := mmList.ListMock.defaultExpectation.params
 		mm_want_ptrs := mmList.ListMock.defaultExpectation.paramPtrs
 
-		mm_got := UserRepositoryMockListParams{ctx, req}
+		mm_got := UserRepositoryMockListParams{ctx, limit, offset}
 
 		if mm_want_ptrs != nil {
 
@@ -1273,8 +1296,12 @@ func (mmList *UserRepositoryMock) List(ctx context.Context, req *pb.ListRequest)
 				mmList.t.Errorf("UserRepositoryMock.List got unexpected parameter ctx, want: %#v, got: %#v%s\n", *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
 			}
 
-			if mm_want_ptrs.req != nil && !minimock.Equal(*mm_want_ptrs.req, mm_got.req) {
-				mmList.t.Errorf("UserRepositoryMock.List got unexpected parameter req, want: %#v, got: %#v%s\n", *mm_want_ptrs.req, mm_got.req, minimock.Diff(*mm_want_ptrs.req, mm_got.req))
+			if mm_want_ptrs.limit != nil && !minimock.Equal(*mm_want_ptrs.limit, mm_got.limit) {
+				mmList.t.Errorf("UserRepositoryMock.List got unexpected parameter limit, want: %#v, got: %#v%s\n", *mm_want_ptrs.limit, mm_got.limit, minimock.Diff(*mm_want_ptrs.limit, mm_got.limit))
+			}
+
+			if mm_want_ptrs.offset != nil && !minimock.Equal(*mm_want_ptrs.offset, mm_got.offset) {
+				mmList.t.Errorf("UserRepositoryMock.List got unexpected parameter offset, want: %#v, got: %#v%s\n", *mm_want_ptrs.offset, mm_got.offset, minimock.Diff(*mm_want_ptrs.offset, mm_got.offset))
 			}
 
 		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
@@ -1288,9 +1315,9 @@ func (mmList *UserRepositoryMock) List(ctx context.Context, req *pb.ListRequest)
 		return (*mm_results).upa1, (*mm_results).err
 	}
 	if mmList.funcList != nil {
-		return mmList.funcList(ctx, req)
+		return mmList.funcList(ctx, limit, offset)
 	}
-	mmList.t.Fatalf("Unexpected call to UserRepositoryMock.List. %v %v", ctx, req)
+	mmList.t.Fatalf("Unexpected call to UserRepositoryMock.List. %v %v %v", ctx, limit, offset)
 	return
 }
 
@@ -1385,14 +1412,14 @@ type UserRepositoryMockUpdateExpectation struct {
 
 // UserRepositoryMockUpdateParams contains parameters of the UserRepository.Update
 type UserRepositoryMockUpdateParams struct {
-	ctx context.Context
-	req *pb.UpdateRequest
+	ctx     context.Context
+	updates *model.User
 }
 
 // UserRepositoryMockUpdateParamPtrs contains pointers to parameters of the UserRepository.Update
 type UserRepositoryMockUpdateParamPtrs struct {
-	ctx *context.Context
-	req **pb.UpdateRequest
+	ctx     *context.Context
+	updates **model.User
 }
 
 // UserRepositoryMockUpdateResults contains results of the UserRepository.Update
@@ -1411,7 +1438,7 @@ func (mmUpdate *mUserRepositoryMockUpdate) Optional() *mUserRepositoryMockUpdate
 }
 
 // Expect sets up expected params for UserRepository.Update
-func (mmUpdate *mUserRepositoryMockUpdate) Expect(ctx context.Context, req *pb.UpdateRequest) *mUserRepositoryMockUpdate {
+func (mmUpdate *mUserRepositoryMockUpdate) Expect(ctx context.Context, updates *model.User) *mUserRepositoryMockUpdate {
 	if mmUpdate.mock.funcUpdate != nil {
 		mmUpdate.mock.t.Fatalf("UserRepositoryMock.Update mock is already set by Set")
 	}
@@ -1424,7 +1451,7 @@ func (mmUpdate *mUserRepositoryMockUpdate) Expect(ctx context.Context, req *pb.U
 		mmUpdate.mock.t.Fatalf("UserRepositoryMock.Update mock is already set by ExpectParams functions")
 	}
 
-	mmUpdate.defaultExpectation.params = &UserRepositoryMockUpdateParams{ctx, req}
+	mmUpdate.defaultExpectation.params = &UserRepositoryMockUpdateParams{ctx, updates}
 	for _, e := range mmUpdate.expectations {
 		if minimock.Equal(e.params, mmUpdate.defaultExpectation.params) {
 			mmUpdate.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmUpdate.defaultExpectation.params)
@@ -1456,8 +1483,8 @@ func (mmUpdate *mUserRepositoryMockUpdate) ExpectCtxParam1(ctx context.Context) 
 	return mmUpdate
 }
 
-// ExpectReqParam2 sets up expected param req for UserRepository.Update
-func (mmUpdate *mUserRepositoryMockUpdate) ExpectReqParam2(req *pb.UpdateRequest) *mUserRepositoryMockUpdate {
+// ExpectUpdatesParam2 sets up expected param updates for UserRepository.Update
+func (mmUpdate *mUserRepositoryMockUpdate) ExpectUpdatesParam2(updates *model.User) *mUserRepositoryMockUpdate {
 	if mmUpdate.mock.funcUpdate != nil {
 		mmUpdate.mock.t.Fatalf("UserRepositoryMock.Update mock is already set by Set")
 	}
@@ -1473,13 +1500,13 @@ func (mmUpdate *mUserRepositoryMockUpdate) ExpectReqParam2(req *pb.UpdateRequest
 	if mmUpdate.defaultExpectation.paramPtrs == nil {
 		mmUpdate.defaultExpectation.paramPtrs = &UserRepositoryMockUpdateParamPtrs{}
 	}
-	mmUpdate.defaultExpectation.paramPtrs.req = &req
+	mmUpdate.defaultExpectation.paramPtrs.updates = &updates
 
 	return mmUpdate
 }
 
 // Inspect accepts an inspector function that has same arguments as the UserRepository.Update
-func (mmUpdate *mUserRepositoryMockUpdate) Inspect(f func(ctx context.Context, req *pb.UpdateRequest)) *mUserRepositoryMockUpdate {
+func (mmUpdate *mUserRepositoryMockUpdate) Inspect(f func(ctx context.Context, updates *model.User)) *mUserRepositoryMockUpdate {
 	if mmUpdate.mock.inspectFuncUpdate != nil {
 		mmUpdate.mock.t.Fatalf("Inspect function is already set for UserRepositoryMock.Update")
 	}
@@ -1503,7 +1530,7 @@ func (mmUpdate *mUserRepositoryMockUpdate) Return(err error) *UserRepositoryMock
 }
 
 // Set uses given function f to mock the UserRepository.Update method
-func (mmUpdate *mUserRepositoryMockUpdate) Set(f func(ctx context.Context, req *pb.UpdateRequest) (err error)) *UserRepositoryMock {
+func (mmUpdate *mUserRepositoryMockUpdate) Set(f func(ctx context.Context, updates *model.User) (err error)) *UserRepositoryMock {
 	if mmUpdate.defaultExpectation != nil {
 		mmUpdate.mock.t.Fatalf("Default expectation is already set for the UserRepository.Update method")
 	}
@@ -1518,14 +1545,14 @@ func (mmUpdate *mUserRepositoryMockUpdate) Set(f func(ctx context.Context, req *
 
 // When sets expectation for the UserRepository.Update which will trigger the result defined by the following
 // Then helper
-func (mmUpdate *mUserRepositoryMockUpdate) When(ctx context.Context, req *pb.UpdateRequest) *UserRepositoryMockUpdateExpectation {
+func (mmUpdate *mUserRepositoryMockUpdate) When(ctx context.Context, updates *model.User) *UserRepositoryMockUpdateExpectation {
 	if mmUpdate.mock.funcUpdate != nil {
 		mmUpdate.mock.t.Fatalf("UserRepositoryMock.Update mock is already set by Set")
 	}
 
 	expectation := &UserRepositoryMockUpdateExpectation{
 		mock:   mmUpdate.mock,
-		params: &UserRepositoryMockUpdateParams{ctx, req},
+		params: &UserRepositoryMockUpdateParams{ctx, updates},
 	}
 	mmUpdate.expectations = append(mmUpdate.expectations, expectation)
 	return expectation
@@ -1558,15 +1585,15 @@ func (mmUpdate *mUserRepositoryMockUpdate) invocationsDone() bool {
 }
 
 // Update implements repository.UserRepository
-func (mmUpdate *UserRepositoryMock) Update(ctx context.Context, req *pb.UpdateRequest) (err error) {
+func (mmUpdate *UserRepositoryMock) Update(ctx context.Context, updates *model.User) (err error) {
 	mm_atomic.AddUint64(&mmUpdate.beforeUpdateCounter, 1)
 	defer mm_atomic.AddUint64(&mmUpdate.afterUpdateCounter, 1)
 
 	if mmUpdate.inspectFuncUpdate != nil {
-		mmUpdate.inspectFuncUpdate(ctx, req)
+		mmUpdate.inspectFuncUpdate(ctx, updates)
 	}
 
-	mm_params := UserRepositoryMockUpdateParams{ctx, req}
+	mm_params := UserRepositoryMockUpdateParams{ctx, updates}
 
 	// Record call args
 	mmUpdate.UpdateMock.mutex.Lock()
@@ -1585,7 +1612,7 @@ func (mmUpdate *UserRepositoryMock) Update(ctx context.Context, req *pb.UpdateRe
 		mm_want := mmUpdate.UpdateMock.defaultExpectation.params
 		mm_want_ptrs := mmUpdate.UpdateMock.defaultExpectation.paramPtrs
 
-		mm_got := UserRepositoryMockUpdateParams{ctx, req}
+		mm_got := UserRepositoryMockUpdateParams{ctx, updates}
 
 		if mm_want_ptrs != nil {
 
@@ -1593,8 +1620,8 @@ func (mmUpdate *UserRepositoryMock) Update(ctx context.Context, req *pb.UpdateRe
 				mmUpdate.t.Errorf("UserRepositoryMock.Update got unexpected parameter ctx, want: %#v, got: %#v%s\n", *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
 			}
 
-			if mm_want_ptrs.req != nil && !minimock.Equal(*mm_want_ptrs.req, mm_got.req) {
-				mmUpdate.t.Errorf("UserRepositoryMock.Update got unexpected parameter req, want: %#v, got: %#v%s\n", *mm_want_ptrs.req, mm_got.req, minimock.Diff(*mm_want_ptrs.req, mm_got.req))
+			if mm_want_ptrs.updates != nil && !minimock.Equal(*mm_want_ptrs.updates, mm_got.updates) {
+				mmUpdate.t.Errorf("UserRepositoryMock.Update got unexpected parameter updates, want: %#v, got: %#v%s\n", *mm_want_ptrs.updates, mm_got.updates, minimock.Diff(*mm_want_ptrs.updates, mm_got.updates))
 			}
 
 		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
@@ -1608,9 +1635,9 @@ func (mmUpdate *UserRepositoryMock) Update(ctx context.Context, req *pb.UpdateRe
 		return (*mm_results).err
 	}
 	if mmUpdate.funcUpdate != nil {
-		return mmUpdate.funcUpdate(ctx, req)
+		return mmUpdate.funcUpdate(ctx, updates)
 	}
-	mmUpdate.t.Fatalf("Unexpected call to UserRepositoryMock.Update. %v %v", ctx, req)
+	mmUpdate.t.Fatalf("Unexpected call to UserRepositoryMock.Update. %v %v", ctx, updates)
 	return
 }
 

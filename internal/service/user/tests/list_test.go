@@ -12,7 +12,6 @@ import (
 	repoMocks "github.com/mikhailsoldatkin/auth/internal/repository/mocks"
 	"github.com/mikhailsoldatkin/auth/internal/service/user"
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
-	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,13 +20,17 @@ func TestList(t *testing.T) {
 	type userRepoMockFunc func(mc *minimock.Controller) repository.UserRepository
 
 	type args struct {
-		ctx context.Context
-		req *pb.ListRequest
+		ctx    context.Context
+		limit  int64
+		offset int64
 	}
 
 	var (
 		ctx = context.Background()
 		mc  = minimock.NewController(t)
+
+		limit  = 2
+		offset = 0
 
 		id1    = gofakeit.Int64()
 		name1  = gofakeit.Name()
@@ -59,9 +62,6 @@ func TestList(t *testing.T) {
 				UpdatedAt: now2,
 			},
 		}
-		req = &pb.ListRequest{
-			Limit: 2,
-		}
 		wantErr = fmt.Errorf("repository error")
 	)
 
@@ -75,28 +75,30 @@ func TestList(t *testing.T) {
 		{
 			name: "success case",
 			args: args{
-				ctx: ctx,
-				req: req,
+				ctx:    ctx,
+				limit:  int64(limit),
+				offset: int64(offset),
 			},
 			want: wantResp,
 			err:  nil,
 			userRepoMock: func(mc *minimock.Controller) repository.UserRepository {
 				mock := repoMocks.NewUserRepositoryMock(mc)
-				mock.ListMock.Expect(ctx, req).Return(wantResp, nil)
+				mock.ListMock.Expect(ctx, int64(limit), int64(offset)).Return(wantResp, nil)
 				return mock
 			},
 		},
 		{
 			name: "error case",
 			args: args{
-				ctx: ctx,
-				req: req,
+				ctx:    ctx,
+				limit:  int64(limit),
+				offset: int64(offset),
 			},
 			want: nil,
 			err:  wantErr,
 			userRepoMock: func(mc *minimock.Controller) repository.UserRepository {
 				mock := repoMocks.NewUserRepositoryMock(mc)
-				mock.ListMock.Expect(ctx, req).Return(nil, wantErr)
+				mock.ListMock.Expect(ctx, int64(limit), int64(offset)).Return(nil, wantErr)
 				return mock
 			},
 		},
@@ -109,7 +111,7 @@ func TestList(t *testing.T) {
 			userRepoMock := tt.userRepoMock(mc)
 			service := user.NewMockService(userRepoMock)
 
-			resp, repoErr := service.List(tt.args.ctx, tt.args.req)
+			resp, repoErr := service.List(tt.args.ctx, tt.args.limit, tt.args.offset)
 			require.Equal(t, tt.err, repoErr)
 			require.Equal(t, tt.want, resp)
 		})

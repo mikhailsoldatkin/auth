@@ -10,9 +10,8 @@ import (
 	"github.com/mikhailsoldatkin/auth/internal/repository"
 	repoMocks "github.com/mikhailsoldatkin/auth/internal/repository/mocks"
 	"github.com/mikhailsoldatkin/auth/internal/service/user"
-	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
+	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func TestUpdate(t *testing.T) {
@@ -21,7 +20,7 @@ func TestUpdate(t *testing.T) {
 
 	type args struct {
 		ctx context.Context
-		req *pb.UpdateRequest
+		req *model.User
 	}
 
 	var (
@@ -30,9 +29,9 @@ func TestUpdate(t *testing.T) {
 
 		id   = gofakeit.Int64()
 		name = gofakeit.Name()
-		req  = &pb.UpdateRequest{
-			Id:   id,
-			Name: wrapperspb.String(name),
+		req  = &model.User{
+			ID:   id,
+			Name: name,
 		}
 		wantErr = fmt.Errorf("repository error")
 	)
