@@ -30,7 +30,7 @@ func NewClient(pool *redis.Pool, config config.RedisConfig) *Client {
 }
 
 // HashSet sets multiple fields in a Redis hash stored at key.
-func (c *Client) HashSet(ctx context.Context, key string, values interface{}) error {
+func (c *Client) HashSet(ctx context.Context, key string, values any) error {
 	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
 		_, err := conn.Do("HSET", redis.Args{key}.AddFlat(values)...)
 		if err != nil {
@@ -47,7 +47,7 @@ func (c *Client) HashSet(ctx context.Context, key string, values interface{}) er
 }
 
 // Set sets the value of a key in Redis.
-func (c *Client) Set(ctx context.Context, key string, value interface{}) error {
+func (c *Client) Set(ctx context.Context, key string, value any) error {
 	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
 		_, err := conn.Do("SET", redis.Args{key}.Add(value)...)
 		if err != nil {
@@ -64,8 +64,8 @@ func (c *Client) Set(ctx context.Context, key string, value interface{}) error {
 }
 
 // HGetAll retrieves all fields and values of a Redis hash stored at key.
-func (c *Client) HGetAll(ctx context.Context, key string) ([]interface{}, error) {
-	var values []interface{}
+func (c *Client) HGetAll(ctx context.Context, key string) ([]any, error) {
+	var values []any
 	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
 		var errEx error
 		values, errEx = redis.Values(conn.Do("HGETALL", key))
@@ -83,8 +83,8 @@ func (c *Client) HGetAll(ctx context.Context, key string) ([]interface{}, error)
 }
 
 // Get retrieves the value of a key in Redis.
-func (c *Client) Get(ctx context.Context, key string) (interface{}, error) {
-	var value interface{}
+func (c *Client) Get(ctx context.Context, key string) (any, error) {
+	var value any
 	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
 		var errEx error
 		value, errEx = conn.Do("GET", key)
