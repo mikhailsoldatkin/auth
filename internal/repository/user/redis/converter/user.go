@@ -1,6 +1,7 @@
 package converter
 
 import (
+	"log"
 	"time"
 
 	modelRepo "github.com/mikhailsoldatkin/auth/internal/repository/user/redis/model"
@@ -24,18 +25,22 @@ func FromRepoToService(user *modelRepo.User) *model.User {
 func FromServiceToRepo(user *model.User, createNew bool) *modelRepo.User {
 	now := time.Now().UnixNano()
 
+	log.Printf("user.CreatedAt = %v", user.CreatedAt)
+	log.Printf("user.UpdatedAt = %v", user.UpdatedAt)
+
 	repoUser := &modelRepo.User{
-		ID:          user.ID,
-		Name:        user.Name,
-		Email:       user.Email,
-		Role:        user.Role,
-		UpdatedAtNs: now,
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+		Role:  user.Role,
 	}
 
 	if createNew {
 		repoUser.CreatedAtNs = now
+		repoUser.UpdatedAtNs = now
 	} else {
 		repoUser.CreatedAtNs = user.CreatedAt.UnixNano()
+		repoUser.UpdatedAtNs = now
 	}
 
 	return repoUser

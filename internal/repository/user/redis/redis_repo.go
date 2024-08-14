@@ -15,8 +15,7 @@ import (
 )
 
 const (
-	userEntity      = "user"
-	defaultPageSize = 10
+	userEntity = "user"
 )
 
 type repo struct {
