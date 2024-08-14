@@ -3,6 +3,7 @@ package pg
 import (
 	"context"
 	"errors"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4"
@@ -38,6 +39,7 @@ func NewRepository(db db.Client) repository.UserRepository {
 
 // Create inserts a new user into the database.
 func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
+	now := time.Now()
 	builder := sq.Insert(tableUsers).
 		PlaceholderFormat(sq.Dollar).
 		Columns(
@@ -47,7 +49,7 @@ func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
 			columnCreatedAt,
 			columnUpdatedAt,
 		).
-		Values(user.Name, user.Email, user.Role, user.CreatedAt, user.UpdatedAt).
+		Values(user.Name, user.Email, user.Role, now, now).
 		Suffix("RETURNING id")
 
 	query, args, err := builder.ToSql()

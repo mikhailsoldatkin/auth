@@ -1,6 +1,8 @@
 package converter
 
 import (
+	"time"
+
 	modelRepo "github.com/mikhailsoldatkin/auth/internal/repository/user/pg/model"
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
@@ -46,7 +48,7 @@ func FromServiceToRepoUpdate(updates *model.User) map[string]any {
 	if updates.Role != pb.Role_UNKNOWN.String() {
 		updateFields[columnRole] = updates.Role
 	}
-	updateFields[columnUpdatedAt] = updates.UpdatedAt
+	updateFields[columnUpdatedAt] = time.Now()
 
 	return updateFields
 }

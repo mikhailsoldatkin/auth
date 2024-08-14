@@ -1,8 +1,6 @@
 package converter
 
 import (
-	"time"
-
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -31,23 +29,19 @@ func FromServiceToProtobufList(users []*model.User) []*pb.User {
 
 // FromProtobufToServiceCreate converter from protobuf Create request to service User model.
 func FromProtobufToServiceCreate(req *pb.CreateRequest) *model.User {
-	now := time.Now()
 	return &model.User{
-		Name:      req.GetName(),
-		Email:     req.GetEmail(),
-		Role:      req.GetRole().String(),
-		CreatedAt: now,
-		UpdatedAt: now,
+		Name:  req.GetName(),
+		Email: req.GetEmail(),
+		Role:  req.GetRole().String(),
 	}
 }
 
 // FromProtobufToServiceUpdate converter from protobuf Update request to service User model.
 func FromProtobufToServiceUpdate(req *pb.UpdateRequest) *model.User {
 	return &model.User{
-		ID:        req.Id,
-		Name:      req.GetName().GetValue(),
-		Email:     req.GetEmail().GetValue(),
-		Role:      req.GetRole().String(),
-		UpdatedAt: time.Now(),
+		ID:    req.Id,
+		Name:  req.GetName().GetValue(),
+		Email: req.GetEmail().GetValue(),
+		Role:  req.GetRole().String(),
 	}
 }

@@ -55,7 +55,7 @@ func FromServiceToRepoUpdate(updates *model.User) map[string]any {
 	if updates.Role != pb.Role_UNKNOWN.String() {
 		updateFields[fieldRole] = updates.Role
 	}
-	updateFields[fieldUpdatedAt] = updates.UpdatedAt.UnixNano()
+	updateFields[fieldUpdatedAt] = time.Now().UnixNano()
 
 	return updateFields
 }
