@@ -141,12 +141,8 @@ github.com/mattn/go-isatty v0.0.8/go.mod h1:Iq45c/XA43vh69/j3iqttzPXn0bhXyGjM0Hd
 github.com/mattn/go-isatty v0.0.9/go.mod h1:YNRxwqDuOph6SZLI9vUUz6OYw3QyUt7WiY2yME+cCiQ=
 github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Kysco4FUpU=
 github.com/mattn/go-sqlite3 v1.14.6/go.mod h1:NyWgC/yNuGj7Q9rpYnZvas74GogHl5/Z4A/KQRfk6bU=
-github.com/mikhailsoldatkin/platform_common v1.0.0 h1:3P2ftMiQMGvU+PwlNQfab6qhNCqHKhx5k8vuKNoAaP0=
-github.com/mikhailsoldatkin/platform_common v1.0.0/go.mod h1:XFPRspnkHKf9fN4zr5k05uJReZ9aijdt29tMdC84w2I=
 github.com/mikhailsoldatkin/platform_common v1.0.1 h1:s+lKNjASga4yaca5HuBVP5ek55sUoWxoq/uxSLIOilA=
 github.com/mikhailsoldatkin/platform_common v1.0.1/go.mod h1:038TrzD+rZSkfifhOKynKSielpBIWI3fJ6JSu48w8rs=
-github.com/mikhailsoldatkin/platform_common v1.0.2 h1:LR65o9HXDbFIf+LR4WzVxT5XT/5iduqVA5LO1AtItos=
-github.com/mikhailsoldatkin/platform_common v1.0.2/go.mod h1:038TrzD+rZSkfifhOKynKSielpBIWI3fJ6JSu48w8rs=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
