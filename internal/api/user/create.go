@@ -20,7 +20,7 @@ func (i *Implementation) Create(ctx context.Context, req *pb.CreateRequest) (*pb
 		return nil, status.Errorf(codes.InvalidArgument, "invalid email format: %v", req.GetEmail())
 	}
 
-	id, err := i.userService.Create(ctx, converter.ToServiceFromProtobuf(req))
+	id, err := i.userService.Create(ctx, converter.FromProtobufToServiceCreate(req))
 	if err != nil {
 		return nil, customerrors.ConvertError(err)
 	}

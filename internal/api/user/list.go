@@ -10,10 +10,10 @@ import (
 
 // List lists users with pagination support using limit and offset.
 func (i *Implementation) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
-	users, err := i.userService.List(ctx, req)
+	users, err := i.userService.List(ctx, req.Limit, req.Offset)
 	if err != nil {
 		return nil, customerrors.ConvertError(err)
 	}
 
-	return &pb.ListResponse{Users: converter.ToProtobufFromServiceList(users)}, nil
+	return &pb.ListResponse{Users: converter.FromServiceToProtobufList(users)}, nil
 }

@@ -15,5 +15,5 @@ func (i *Implementation) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetRe
 		return nil, customerrors.ConvertError(err)
 	}
 
-	return &pb.GetResponse{User: converter.ToProtobufFromService(user)}, nil
+	return &pb.GetResponse{User: converter.FromServiceToProtobuf(user)}, nil
 }

@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// User represents a user entity in the PG database.
+// User represents a user entity in the Postgres database.
 type User struct {
 	ID        int64     `db:"id"`
 	Name      string    `db:"name"`

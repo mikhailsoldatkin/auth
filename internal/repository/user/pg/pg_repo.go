@@ -10,9 +10,8 @@ import (
 	"github.com/mikhailsoldatkin/auth/internal/customerrors"
 	"github.com/mikhailsoldatkin/auth/internal/repository"
 	"github.com/mikhailsoldatkin/auth/internal/repository/user/pg/converter"
-	modelRepo "github.com/mikhailsoldatkin/auth/internal/repository/user/pg/model"
+	repoModel "github.com/mikhailsoldatkin/auth/internal/repository/user/pg/model"
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
-	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 	"github.com/mikhailsoldatkin/platform_common/pkg/db"
 )
 
@@ -96,7 +95,7 @@ func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 		QueryRaw: query,
 	}
 
-	var user modelRepo.User
+	var user repoModel.User
 	err = r.db.DB().ScanOneContext(ctx, &user, q, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -105,10 +104,10 @@ func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 		return nil, err
 	}
 
-	return converter.ToServiceFromRepo(&user), nil
+	return converter.FromRepoToService(&user), nil
 }
 
-// Delete removes a user by ID from the database.
+// Delete removes a user from the database by ID.
 func (r *repo) Delete(ctx context.Context, id int64) error {
 	builder := sq.Delete(tableUsers).
 		Where(sq.Eq{columnID: id}).
@@ -133,23 +132,22 @@ func (r *repo) Delete(ctx context.Context, id int64) error {
 }
 
 // Update modifies an existing user in the database.
-func (r *repo) Update(ctx context.Context, req *pb.UpdateRequest) error {
+func (r *repo) Update(ctx context.Context, updates *model.User) error {
 	updateFields := make(map[string]any)
-	updateFields[columnUpdatedAt] = time.Now()
 
-	if req.GetName() != nil {
-		updateFields[columnName] = req.GetName().GetValue()
+	if updates.Name != "" {
+		updateFields[columnName] = updates.Name
 	}
-	if req.GetEmail() != nil {
-		updateFields[columnEmail] = req.GetEmail().GetValue()
+	if updates.Email != "" {
+		updateFields[columnEmail] = updates.Email
 	}
-	if req.GetRole().String() != "" {
-		updateFields[columnRole] = req.GetRole().String()
+	if updates.Role != "" {
+		updateFields[columnRole] = updates.Role
 	}
 
 	builder := sq.Update(tableUsers).
 		SetMap(updateFields).
-		Where(sq.Eq{columnID: req.GetId()}).
+		Where(sq.Eq{columnID: updates.ID}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builder.ToSql()
@@ -162,29 +160,33 @@ func (r *repo) Update(ctx context.Context, req *pb.UpdateRequest) error {
 		QueryRaw: query,
 	}
 
-	_, err = r.db.DB().ExecContext(ctx, q, args...)
+	result, err := r.db.DB().ExecContext(ctx, q, args...)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return customerrors.NewErrNotFound(userEntity, req.GetId())
-		}
 		return err
+	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		return customerrors.NewErrNotFound(userEntity, updates.ID)
 	}
 
 	return nil
 }
 
 // List retrieves a list of users from the database.
-func (r *repo) List(ctx context.Context, req *pb.ListRequest) ([]*model.User, error) {
-	limit := int(req.GetLimit())
+func (r *repo) List(ctx context.Context, limit, offset int64) ([]*model.User, error) {
 	if limit <= 0 {
 		limit = defaultPageSize
+	}
+	if offset < 0 {
+		offset = 0
 	}
 
 	builder := sq.Select("*").
 		From(tableUsers).
 		OrderBy(columnID).
 		Limit(uint64(limit)).
-		Offset(uint64(req.GetOffset())).
+		Offset(uint64(offset)).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builder.ToSql()
@@ -197,11 +199,11 @@ func (r *repo) List(ctx context.Context, req *pb.ListRequest) ([]*model.User, er
 		QueryRaw: query,
 	}
 
-	var usersRepo []*modelRepo.User
-	err = r.db.DB().ScanAllContext(ctx, &usersRepo, q, args...)
+	var repoUsers []*repoModel.User
+	err = r.db.DB().ScanAllContext(ctx, &repoUsers, q, args...)
 	if err != nil {
 		return nil, err
 	}
 
-	return converter.ToServiceFromRepoList(usersRepo), nil
+	return converter.FromRepoToServiceList(repoUsers), nil
 }

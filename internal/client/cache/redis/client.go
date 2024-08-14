@@ -150,26 +150,6 @@ func (c *Client) Ping(ctx context.Context) error {
 	return nil
 }
 
-// Keys retrieves all keys matching the specified pattern.
-func (c *Client) Keys(ctx context.Context, pattern string) ([]string, error) {
-	var keys []string
-	err := c.execute(ctx, func(ctx context.Context, conn redis.Conn) error {
-		var errEx error
-		keys, errEx = redis.Strings(conn.Do("KEYS", pattern))
-		if errEx != nil {
-			return errEx
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return keys, nil
-}
-
 // execute is a helper method that wraps Redis operations with connection management and error handling.
 func (c *Client) execute(ctx context.Context, handler handler) error {
 	conn, err := c.getConnect(ctx)

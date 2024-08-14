@@ -4,26 +4,26 @@ import (
 	"context"
 	"fmt"
 
-	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
+	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 )
 
-// Update modifies an existing user's data based on the provided update request and logs the operation.
+// Update modifies an existing user's data based on the provided updates and logs the operation.
 // It updates the user data in the database, then synchronizes data in cache.
-func (s *serv) Update(ctx context.Context, req *pb.UpdateRequest) error {
+func (s *serv) Update(ctx context.Context, updates *model.User) error {
 	err := s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
-		errTx := s.pgRepository.Update(ctx, req)
+		errTx := s.pgRepository.Update(ctx, updates)
 		if errTx != nil {
 			return errTx
 		}
 
-		errTx = s.logRepository.Log(ctx, req.GetId(), fmt.Sprintf("user %d updated", req.GetId()))
+		errTx = s.logRepository.Log(ctx, updates.ID, fmt.Sprintf("user %d updated", updates.ID))
 		if errTx != nil {
 			return errTx
 		}
 
-		errTx = s.redisRepository.Update(ctx, req)
+		errTx = s.redisRepository.Update(ctx, updates)
 		if errTx != nil {
-			return fmt.Errorf("failed to update user %d in cache: %v", req.GetId(), errTx)
+			return fmt.Errorf("failed to update user %d in cache: %v", updates.ID, errTx)
 		}
 
 		return nil

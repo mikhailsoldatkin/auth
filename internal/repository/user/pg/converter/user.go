@@ -5,8 +5,8 @@ import (
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 )
 
-// ToServiceFromRepo converter from PG repository User model to service User model.
-func ToServiceFromRepo(user *modelRepo.User) *model.User {
+// FromRepoToService converter from Postgres repository User model to service User model.
+func FromRepoToService(user *modelRepo.User) *model.User {
 	return &model.User{
 		ID:        user.ID,
 		Name:      user.Name,
@@ -17,11 +17,11 @@ func ToServiceFromRepo(user *modelRepo.User) *model.User {
 	}
 }
 
-// ToServiceFromRepoList converts list of PG repository User models to list of service User models.
-func ToServiceFromRepoList(users []*modelRepo.User) []*model.User {
+// FromRepoToServiceList converts list of Postgres repository User models to list of service User models.
+func FromRepoToServiceList(users []*modelRepo.User) []*model.User {
 	serviceUsers := make([]*model.User, len(users))
 	for i, user := range users {
-		serviceUsers[i] = ToServiceFromRepo(user)
+		serviceUsers[i] = FromRepoToService(user)
 	}
 	return serviceUsers
 }

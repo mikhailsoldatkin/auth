@@ -13,5 +13,4 @@ type RedisClient interface {
 	Expire(ctx context.Context, key string, expiration time.Duration) error
 	Delete(ctx context.Context, key string) error
 	Ping(ctx context.Context) error
-	Keys(ctx context.Context, s string) ([]string, error)
 }
