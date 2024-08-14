@@ -87,12 +87,6 @@ func TestCreate(t *testing.T) {
 			err:  nil,
 			userServiceMock: func(mc *minimock.Controller) service.UserService {
 				mock := serviceMocks.NewUserServiceMock(mc)
-				//mock.CreateMock.Set(func(_ context.Context, user *model.User) (int64, error) {
-				//	require.Equal(t, wantUser.Name, user.Name)
-				//	require.Equal(t, wantUser.Email, user.Email)
-				//	require.Equal(t, wantUser.Role, user.Role)
-				//	return id, nil
-				//})
 				mock.CreateMock.Expect(ctx, converter.FromProtobufToServiceCreate(req)).Return(id, nil)
 				return mock
 			},
