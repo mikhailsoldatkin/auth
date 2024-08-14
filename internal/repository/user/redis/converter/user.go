@@ -34,6 +34,8 @@ func FromServiceToRepo(user *model.User, createNew bool) *modelRepo.User {
 
 	if createNew {
 		repoUser.CreatedAtNs = now
+	} else {
+		repoUser.CreatedAtNs = user.CreatedAt.UnixNano()
 	}
 
 	return repoUser
