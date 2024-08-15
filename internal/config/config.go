@@ -10,8 +10,8 @@ import (
 
 const envPath = "./.env"
 
-// DatabaseConfig represents the configuration for the database.
-type DatabaseConfig struct {
+// DB represents the configuration for the database.
+type DB struct {
 	PostgresDB       string `env:"POSTGRES_DB" env-required:"true"`
 	PostgresUser     string `env:"POSTGRES_USER" env-required:"true"`
 	PostgresPassword string `env:"POSTGRES_PASSWORD" env-required:"true"`
@@ -20,13 +20,28 @@ type DatabaseConfig struct {
 	PostgresDSN      string `env:"-"`
 }
 
-// GRPCConfig represents the configuration for the gRPC server.
-type GRPCConfig struct {
-	Port int `env:"GRPC_PORT" env-required:"true"`
+// GRPC represents the configuration for the gRPC server.
+type GRPC struct {
+	Port    int    `env:"GRPC_PORT" env-required:"true"`
+	Address string `env:"-"`
 }
 
-// RedisConfig represents configuration for Redis.
-type RedisConfig struct {
+// HTTP represents the configuration for the http server.
+type HTTP struct {
+	Port    int    `env:"HTTP_PORT" env-required:"true"`
+	Host    string `env:"HTTP_HOST" env-required:"true"`
+	Address string `env:"-"`
+}
+
+// Swagger represents the configuration for the swagger server.
+type Swagger struct {
+	Port    int    `env:"SWAGGER_PORT" env-required:"true"`
+	Host    string `env:"SWAGGER_HOST" env-required:"true"`
+	Address string `env:"-"`
+}
+
+// Redis represents configuration for Redis.
+type Redis struct {
 	Host        string `env:"REDIS_HOST" env-required:"true"`
 	Port        int    `env:"REDIS_PORT" env-required:"true"`
 	ConnTimeout int    `env:"REDIS_CONNECTION_TIMEOUT_SEC" env-required:"true"`
@@ -38,10 +53,11 @@ type RedisConfig struct {
 
 // Config represents the overall application configuration.
 type Config struct {
-	AppName  string `env:"APP_NAME" env-required:"true"`
-	Database DatabaseConfig
-	GRPC     GRPCConfig
-	Redis    RedisConfig
+	DB      DB
+	GRPC    GRPC
+	Redis   Redis
+	HTTP    HTTP
+	Swagger Swagger
 }
 
 // Load reads configuration from .env file.
@@ -59,16 +75,19 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("cannot read config from environment variables: %w", err)
 	}
 
-	cfg.Database.PostgresDSN = fmt.Sprintf(
+	cfg.DB.PostgresDSN = fmt.Sprintf(
 		"host=%s port=%d dbname=%s user=%s password=%s sslmode=disable",
-		cfg.Database.Host,
-		cfg.Database.Port,
-		cfg.Database.PostgresDB,
-		cfg.Database.PostgresUser,
-		cfg.Database.PostgresPassword,
+		cfg.DB.Host,
+		cfg.DB.Port,
+		cfg.DB.PostgresDB,
+		cfg.DB.PostgresUser,
+		cfg.DB.PostgresPassword,
 	)
 
 	cfg.Redis.Address = fmt.Sprintf("%s:%d", cfg.Redis.Host, cfg.Redis.Port)
+	cfg.GRPC.Address = fmt.Sprintf(":%d", cfg.GRPC.Port)
+	cfg.HTTP.Address = fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port)
+	cfg.Swagger.Address = fmt.Sprintf("%s:%d", cfg.Swagger.Host, cfg.Swagger.Port)
 
 	return &cfg, nil
 }

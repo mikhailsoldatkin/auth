@@ -10,7 +10,15 @@
 # Environment variables file
 .env
 
-# Vendor directory
-/vendor/
+# Vendors
+*vendor*
 
-/coverage.out
+# Test coverage files
+*coverage*
+
+*.js
+*.png
+*.html
+*.css
+*.json
+
