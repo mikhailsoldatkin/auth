@@ -13,4 +13,4 @@
 # Vendor directory
 /vendor/
 
-/pgdata
+/coverage.out

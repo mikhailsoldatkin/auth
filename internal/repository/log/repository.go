@@ -2,17 +2,20 @@ package log
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/mikhailsoldatkin/auth/internal/client/db"
+	"github.com/jackc/pgx/v4"
+	"github.com/mikhailsoldatkin/auth/internal/customerrors"
 	"github.com/mikhailsoldatkin/auth/internal/repository"
+	"github.com/mikhailsoldatkin/platform_common/pkg/db"
 )
 
 const (
 	tableUsersLogs = "users_logs"
 	columnDetails  = "details"
 	columnUserID   = "user_id"
+	userEntity     = "user"
 )
 
 type logRepo struct {
@@ -24,21 +27,23 @@ func NewRepository(db db.Client) repository.LogRepository {
 	return &logRepo{db: db}
 }
 
-// Log logs a database operation.
-func (r *logRepo) Log(ctx context.Context, userID int64, details string) error {
-	// если апдейтим без указания id, будет ошибка, возможно эта проверка должна быть не здесь
-	if userID == 0 {
-		return nil
-	}
-
+// Log logs a database operation on entity.
+func (r *logRepo) Log(ctx context.Context, id int64, details string) error {
 	builder := sq.Insert(tableUsersLogs).
 		PlaceholderFormat(sq.Dollar).
 		Columns(columnUserID, columnDetails).
-		Values(userID, details)
+		Values(id, details)
+
+	if id == 0 {
+		builder = sq.Insert(tableUsersLogs).
+			PlaceholderFormat(sq.Dollar).
+			Columns(columnDetails).
+			Values(details)
+	}
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return fmt.Errorf("failed to build SQL query: %w", err)
+		return err
 	}
 
 	q := db.Query{
@@ -47,8 +52,8 @@ func (r *logRepo) Log(ctx context.Context, userID int64, details string) error {
 	}
 
 	_, err = r.db.DB().ExecContext(ctx, q, args...)
-	if err != nil {
-		return fmt.Errorf("failed to execute SQL query: %w", err)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return customerrors.NewErrNotFound(userEntity, id)
 	}
 
 	return nil

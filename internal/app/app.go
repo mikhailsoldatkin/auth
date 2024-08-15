@@ -10,9 +10,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
-	"github.com/mikhailsoldatkin/auth/internal/closer"
 	"github.com/mikhailsoldatkin/auth/internal/config"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
+	"github.com/mikhailsoldatkin/platform_common/pkg/closer"
 )
 
 // App represents the application with its dependencies and GRPC server.
@@ -84,12 +84,12 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 }
 
 func (a *App) runGRPCServer() error {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", a.serviceProvider.config.GRPC.GRPCPort))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", a.serviceProvider.config.GRPC.Port))
 	if err != nil {
 		return err
 	}
 
-	log.Printf("gRPC server is running on %d", a.serviceProvider.config.GRPC.GRPCPort)
+	log.Printf("gRPC server is running on %d", a.serviceProvider.config.GRPC.Port)
 
 	err = a.grpcServer.Serve(lis)
 	if err != nil {

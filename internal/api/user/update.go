@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/mikhailsoldatkin/auth/internal/customerrors"
+	"github.com/mikhailsoldatkin/auth/internal/service/user/converter"
 	"github.com/mikhailsoldatkin/auth/internal/validators"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 	"google.golang.org/grpc/codes"
@@ -20,7 +21,7 @@ func (i *Implementation) Update(ctx context.Context, req *pb.UpdateRequest) (*em
 		}
 	}
 
-	err := i.userService.Update(ctx, req)
+	err := i.userService.Update(ctx, converter.FromProtobufToServiceUpdate(req))
 	if err != nil {
 		return nil, customerrors.ConvertError(err)
 	}
