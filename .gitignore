@@ -15,10 +15,3 @@
 
 # Test coverage files
 *coverage*
-
-*.js
-*.png
-*.html
-*.css
-*.json
-
