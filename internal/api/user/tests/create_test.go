@@ -7,15 +7,16 @@ import (
 
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/gojuno/minimock/v3"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	userAPI "github.com/mikhailsoldatkin/auth/internal/api/user"
 	"github.com/mikhailsoldatkin/auth/internal/customerrors"
 	"github.com/mikhailsoldatkin/auth/internal/service"
 	serviceMocks "github.com/mikhailsoldatkin/auth/internal/service/mocks"
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func TestCreate(t *testing.T) {
@@ -36,7 +37,7 @@ func TestCreate(t *testing.T) {
 		role          = gofakeit.RandomString([]string{"USER", "ADMIN"})
 		password      = "12345678"
 		wrongPassword = "123456789"
-		wrongEmail    = "some@com"
+		wrongEmail    = "invalid-email"
 		req           = &pb.CreateRequest{
 			Name:            name,
 			Email:           email,
@@ -67,7 +68,9 @@ func TestCreate(t *testing.T) {
 			Email: email,
 			Role:  role,
 		}
-		wantErr = fmt.Errorf("service error")
+		wantErr         = fmt.Errorf("service error")
+		wantPasswordErr = status.Errorf(codes.InvalidArgument, "password validation failed: passwords don't match")
+		wantEmailErr    = status.Errorf(codes.InvalidArgument, "rpc error: code = InvalidArgument desc = invalid CreateRequest.Email: value must be a valid email address | caused by: mail: missing '@' or angle-addr")
 	)
 
 	tests := []struct {
@@ -119,7 +122,7 @@ func TestCreate(t *testing.T) {
 				req: invalidPasswordReq,
 			},
 			want: nil,
-			err:  status.Errorf(codes.InvalidArgument, "password validation failed: passwords don't match"),
+			err:  wantPasswordErr,
 			userServiceMock: func(_ *minimock.Controller) service.UserService {
 				return nil
 			},
@@ -131,9 +134,13 @@ func TestCreate(t *testing.T) {
 				req: invalidEmailReq,
 			},
 			want: nil,
-			err:  status.Errorf(codes.InvalidArgument, fmt.Sprintf("invalid email format: %s", wrongEmail)),
-			userServiceMock: func(_ *minimock.Controller) service.UserService {
-				return nil
+			err:  wantEmailErr,
+			userServiceMock: func(mc *minimock.Controller) service.UserService {
+				mock := serviceMocks.NewUserServiceMock(mc)
+				mock.CreateMock.Set(func(_ context.Context, _ *model.User) (int64, error) {
+					return 0, wantEmailErr
+				})
+				return mock
 			},
 		},
 	}

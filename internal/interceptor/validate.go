@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // validator defines an interface that requires a Validate method which returns an error if validation fails.
@@ -21,7 +23,7 @@ func ValidateInterceptor(
 ) (any, error) {
 	if val, ok := req.(validator); ok {
 		if err := val.Validate(); err != nil {
-			return nil, err
+			return nil, status.Errorf(codes.InvalidArgument, "invalid argument: %v", err)
 		}
 	}
 
