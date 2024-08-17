@@ -7,19 +7,24 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/mikhailsoldatkin/auth/internal/interceptor"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
+	"github.com/mikhailsoldatkin/auth/internal/interceptor"
+
+	"github.com/mikhailsoldatkin/platform_common/pkg/closer"
+
 	"github.com/mikhailsoldatkin/auth/internal/config"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
+
+	// Register statik to serve Swagger UI and static files
 	_ "github.com/mikhailsoldatkin/auth/statik"
-	"github.com/mikhailsoldatkin/platform_common/pkg/closer"
 )
 
 // App represents the application with its dependencies and GRPC server.
@@ -150,8 +155,9 @@ func (a *App) initHTTPServer(ctx context.Context) error {
 	})
 
 	a.httpServer = &http.Server{
-		Addr:    a.serviceProvider.config.HTTP.Address,
-		Handler: corsMiddleware.Handler(mux),
+		Addr:              a.serviceProvider.config.HTTP.Address,
+		Handler:           corsMiddleware.Handler(mux),
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	return nil
@@ -168,8 +174,9 @@ func (a *App) initSwaggerServer(_ context.Context) error {
 	mux.HandleFunc("/api.swagger.json", serveSwaggerFile("/api.swagger.json"))
 
 	a.swaggerServer = &http.Server{
-		Addr:    a.serviceProvider.config.Swagger.Address,
-		Handler: mux,
+		Addr:              a.serviceProvider.config.Swagger.Address,
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	return nil
@@ -198,7 +205,7 @@ func (a *App) runSwaggerServer() error {
 }
 
 func serveSwaggerFile(path string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, _ *http.Request) {
 		log.Printf("Serving swagger file: %s", path)
 
 		statikFs, err := fs.New()
