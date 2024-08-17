@@ -26,6 +26,10 @@ env:
   REDIS_MAX_ACTIVE: 10
   REDIS_IDLE_TIMEOUT_SEC: 300
 
+  HOST: 0.0.0.0
+  HTTP_PORT: 8080
+  SWAGGER_PORT: 8090
+
 jobs:
   build-and-test:
     name: Build and test
@@ -75,11 +79,20 @@ jobs:
           echo POSTGRES_DB=${{ secrets.POSTGRES_DB }} >> .env
           echo POSTGRES_USER=${{ secrets.POSTGRES_USER }} >> .env
           echo POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} >> .env
+          echo MIGRATIONS_DIR=${{ env.MIGRATIONS_DIR }} >> .env
           echo DB_PORT=${{ env.DB_PORT }} >> .env
           echo DB_HOST=${{ env.DB_HOST }} >> .env
           echo DB_HOST_PORT=${{ secrets.DB_HOST_PORT }} >> .env
-          echo MIGRATIONS_DIR=${{ env.MIGRATIONS_DIR }} >> .env
+          
           echo GRPC_PORT=${{ secrets.GRPC_PORT }} >> .env
+          echo GRPC_HOST=${{ env.HOST }} >> .env
+          
+          echo HTTP_PORT=${{ env.HTTP_PORT }} >> .env
+          echo HTTP_HOST=${{ env.HOST }} >> .env
+          
+          echo SWAGGER_PORT=${{ env.SWAGGER_PORT }} >> .env
+          echo SWAGGER_HOST=${{ env.HOST }} >> .env
+          
           echo DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }} >> .env
           echo APP_NAME=${{ env.APP_NAME }} >> .env
           echo MIGRATOR_NAME=${{ env.MIGRATOR_NAME }} >> .env
