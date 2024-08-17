@@ -23,6 +23,7 @@ type DB struct {
 // GRPC represents the configuration for the gRPC server.
 type GRPC struct {
 	Port    int    `env:"GRPC_PORT" env-required:"true"`
+	Host    string `env:"GRPC_HOST" env-required:"true"`
 	Address string `env:"-"`
 }
 
@@ -85,7 +86,7 @@ func Load() (*Config, error) {
 	)
 
 	cfg.Redis.Address = fmt.Sprintf("%s:%d", cfg.Redis.Host, cfg.Redis.Port)
-	cfg.GRPC.Address = fmt.Sprintf(":%d", cfg.GRPC.Port)
+	cfg.GRPC.Address = fmt.Sprintf("%s:%d", cfg.GRPC.Host, cfg.GRPC.Port)
 	cfg.HTTP.Address = fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port)
 	cfg.Swagger.Address = fmt.Sprintf("%s:%d", cfg.Swagger.Host, cfg.Swagger.Port)
 

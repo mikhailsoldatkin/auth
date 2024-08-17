@@ -176,7 +176,7 @@ func (a *App) initSwaggerServer(_ context.Context) error {
 }
 
 func (a *App) runHTTPServer() error {
-	log.Printf("HTTP server is running on %s", a.serviceProvider.config.HTTP.Address)
+	log.Printf("HTTP server is running on %d", a.serviceProvider.config.HTTP.Port)
 
 	err := a.httpServer.ListenAndServe()
 	if err != nil {
@@ -187,7 +187,7 @@ func (a *App) runHTTPServer() error {
 }
 
 func (a *App) runSwaggerServer() error {
-	log.Printf("Swagger server is running on %s", a.serviceProvider.config.Swagger.Address)
+	log.Printf("Swagger server is running on %d", a.serviceProvider.config.Swagger.Port)
 
 	err := a.swaggerServer.ListenAndServe()
 	if err != nil {
