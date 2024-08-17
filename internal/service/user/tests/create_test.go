@@ -7,11 +7,12 @@ import (
 
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/gojuno/minimock/v3"
+	"github.com/stretchr/testify/require"
+
 	"github.com/mikhailsoldatkin/auth/internal/repository"
 	repoMocks "github.com/mikhailsoldatkin/auth/internal/repository/mocks"
 	"github.com/mikhailsoldatkin/auth/internal/service/user"
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
-	"github.com/stretchr/testify/require"
 )
 
 func TestCreate(t *testing.T) {

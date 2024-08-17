@@ -6,8 +6,9 @@ import (
 	"github.com/mikhailsoldatkin/auth/internal/customerrors"
 	"github.com/mikhailsoldatkin/auth/internal/service/user/converter"
 
-	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 )
 
 // Update modifies user data.

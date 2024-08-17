@@ -3,9 +3,10 @@ package user
 import (
 	"context"
 
+	"google.golang.org/protobuf/types/known/emptypb"
+
 	"github.com/mikhailsoldatkin/auth/internal/customerrors"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // Delete removes a user by ID.

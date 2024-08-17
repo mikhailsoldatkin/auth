@@ -6,9 +6,10 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4"
+	"github.com/mikhailsoldatkin/platform_common/pkg/db"
+
 	"github.com/mikhailsoldatkin/auth/internal/customerrors"
 	"github.com/mikhailsoldatkin/auth/internal/repository"
-	"github.com/mikhailsoldatkin/platform_common/pkg/db"
 )
 
 const (

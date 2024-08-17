@@ -3,9 +3,10 @@ package user
 import (
 	"context"
 
+	"github.com/mikhailsoldatkin/platform_common/pkg/db"
+
 	"github.com/mikhailsoldatkin/auth/internal/repository"
 	"github.com/mikhailsoldatkin/auth/internal/service"
-	"github.com/mikhailsoldatkin/platform_common/pkg/db"
 )
 
 var _ service.UserService = (*serv)(nil)
