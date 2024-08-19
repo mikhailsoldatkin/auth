@@ -193,20 +193,33 @@ func (s *serviceProvider) Consumer() kafka.Consumer {
 	return s.consumer
 }
 
-// ConsumerGroup returns the Kafka consumer group used by the serviceProvider. If the consumer group is not initialized,
-// it creates a new Kafka consumer group with the configured settings.
-func (s *serviceProvider) ConsumerGroup() sarama.ConsumerGroup {
-	if s.consumerGroup == nil {
-		consumerGroup, err := sarama.NewConsumerGroup(
-			s.config.KafkaConsumer.Brokers,
-			s.config.KafkaConsumer.GroupID,
-			s.config.KafkaConsumer.Config,
-		)
-		if err != nil {
-			log.Fatalf("failed to create consumer group: %v", err)
-		}
+const (
+	maxRetries = 3
+	retryDelay = 2 * time.Second
+)
 
-		s.consumerGroup = consumerGroup
+// ConsumerGroup returns the Kafka consumer group used by the serviceProvider.
+// If the consumer group is not initialized, it creates a new Kafka consumer group with the configured settings.
+func (s *serviceProvider) ConsumerGroup() sarama.ConsumerGroup {
+
+	if s.consumerGroup == nil {
+		var err error
+		for i := 0; i < maxRetries; i++ {
+			s.consumerGroup, err = sarama.NewConsumerGroup(
+				s.config.KafkaConsumer.Brokers,
+				s.config.KafkaConsumer.GroupID,
+				s.config.KafkaConsumer.Config,
+			)
+			if err == nil {
+				log.Printf("Successfully created Kafka consumer group (attempt %d/%d)", i+1, maxRetries)
+				break
+			}
+			log.Printf("Failed to create Kafka consumer group (attempt %d/%d): %v", i+1, maxRetries, err)
+			time.Sleep(retryDelay)
+		}
+		if err != nil {
+			log.Fatalf("Failed to create Kafka consumer group after %d attempts: %v", maxRetries, err)
+		}
 	}
 
 	return s.consumerGroup

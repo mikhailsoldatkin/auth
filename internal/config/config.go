@@ -101,9 +101,10 @@ func Load() (*Config, error) {
 	cfg.Swagger.Address = fmt.Sprintf("%s:%d", cfg.Swagger.Host, cfg.Swagger.Port)
 
 	kafkaConfig := sarama.NewConfig()
-	kafkaConfig.Version = sarama.V3_6_0_0
+	kafkaConfig.Version = sarama.V2_6_0_0
 	kafkaConfig.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{sarama.NewBalanceStrategyRoundRobin()}
 	kafkaConfig.Consumer.Offsets.Initial = sarama.OffsetOldest
+
 	cfg.KafkaConsumer.Config = kafkaConfig
 
 	return &cfg, nil
