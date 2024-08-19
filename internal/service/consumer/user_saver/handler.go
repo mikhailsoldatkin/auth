@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/IBM/sarama"
+
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 )
 
