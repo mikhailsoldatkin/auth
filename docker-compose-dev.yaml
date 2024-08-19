@@ -48,6 +48,65 @@ services:
       timeout: 5s
       retries: 3
 
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.7.0
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - ${ZOOKEEPER_CLIENT_PORT}:${ZOOKEEPER_CLIENT_PORT}
+    env_file:
+      - .env
+
+  kafka1:
+    image: confluentinc/cp-kafka:7.7.0
+    hostname: kafka1
+    container_name: kafka1
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    env_file:
+      - .env
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS_1}
+
+  kafka2:
+    image: confluentinc/cp-kafka:7.7.0
+    hostname: kafka2
+    container_name: kafka2
+    depends_on:
+      - zookeeper
+    ports:
+      - "9093:9093"
+    env_file:
+      - .env
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS_2}
+
+  kafka3:
+    image: confluentinc/cp-kafka:7.7.0
+    hostname: kafka3
+    container_name: kafka3
+    depends_on:
+      - zookeeper
+    ports:
+      - "9094:9094"
+    env_file:
+      - .env
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS_3}
+
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:v0.7.2
+    ports:
+      - "8082:8080"
+    env_file:
+      - .env
+
 volumes:
   pgdata:
   redisdata:

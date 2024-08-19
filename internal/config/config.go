@@ -57,6 +57,7 @@ type Redis struct {
 type KafkaConsumer struct {
 	Brokers []string `env:"KAFKA_BROKERS" env-required:"true"`
 	GroupID string   `env:"KAFKA_GROUP_ID" env-required:"true"`
+	Topic   string   `env:"KAFKA_TOPIC" env-required:"true"`
 	Config  *sarama.Config
 }
 

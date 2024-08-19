@@ -172,6 +172,7 @@ func (s *serviceProvider) UserSaverConsumer(ctx context.Context) service.Consume
 		s.userSaverConsumer = userSaverConsumer.NewService(
 			s.PGRepository(ctx),
 			s.Consumer(),
+			s.config.KafkaConsumer,
 		)
 	}
 

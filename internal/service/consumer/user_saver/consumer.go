@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/mikhailsoldatkin/auth/internal/client/kafka"
+	"github.com/mikhailsoldatkin/auth/internal/config"
 	"github.com/mikhailsoldatkin/auth/internal/repository"
 )
 
@@ -11,6 +12,7 @@ import (
 type Service struct {
 	userRepository repository.UserRepository
 	consumer       kafka.Consumer
+	config         config.KafkaConsumer
 }
 
 // NewService creates a new instance of Service.
@@ -18,10 +20,12 @@ type Service struct {
 func NewService(
 	userRepository repository.UserRepository,
 	consumer kafka.Consumer,
+	config config.KafkaConsumer,
 ) *Service {
 	return &Service{
 		userRepository: userRepository,
 		consumer:       consumer,
+		config:         config,
 	}
 }
 
@@ -48,7 +52,7 @@ func (s *Service) run(ctx context.Context) <-chan error {
 
 	go func() {
 		defer close(errChan)
-		errChan <- s.consumer.Consume(ctx, "test-topic", s.UserSaveHandler)
+		errChan <- s.consumer.Consume(ctx, s.config.Topic, s.UserSaveHandler)
 	}()
 
 	return errChan
