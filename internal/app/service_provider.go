@@ -7,6 +7,13 @@ import (
 
 	"github.com/IBM/sarama"
 	redigo "github.com/gomodule/redigo/redis"
+	"github.com/mikhailsoldatkin/platform_common/pkg/cache"
+	"github.com/mikhailsoldatkin/platform_common/pkg/cache/redis"
+	"github.com/mikhailsoldatkin/platform_common/pkg/closer"
+	"github.com/mikhailsoldatkin/platform_common/pkg/db"
+	"github.com/mikhailsoldatkin/platform_common/pkg/db/pg"
+	"github.com/mikhailsoldatkin/platform_common/pkg/db/transaction"
+
 	"github.com/mikhailsoldatkin/auth/internal/api/user"
 	"github.com/mikhailsoldatkin/auth/internal/client/kafka"
 	kafkaConsumer "github.com/mikhailsoldatkin/auth/internal/client/kafka/consumer"
@@ -18,12 +25,6 @@ import (
 	"github.com/mikhailsoldatkin/auth/internal/service"
 	userSaverConsumer "github.com/mikhailsoldatkin/auth/internal/service/consumer/user_saver"
 	userService "github.com/mikhailsoldatkin/auth/internal/service/user"
-	"github.com/mikhailsoldatkin/platform_common/pkg/cache"
-	"github.com/mikhailsoldatkin/platform_common/pkg/cache/redis"
-	"github.com/mikhailsoldatkin/platform_common/pkg/closer"
-	"github.com/mikhailsoldatkin/platform_common/pkg/db"
-	"github.com/mikhailsoldatkin/platform_common/pkg/db/pg"
-	"github.com/mikhailsoldatkin/platform_common/pkg/db/transaction"
 )
 
 // serviceProvider provides access to various services and dependencies required by the application.
