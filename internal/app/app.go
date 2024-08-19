@@ -19,18 +19,16 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
-	"github.com/mikhailsoldatkin/auth/internal/interceptor"
-
-	"github.com/mikhailsoldatkin/platform_common/pkg/closer"
-
 	"github.com/mikhailsoldatkin/auth/internal/config"
+	"github.com/mikhailsoldatkin/auth/internal/interceptor"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
+	"github.com/mikhailsoldatkin/platform_common/pkg/closer"
 
 	// Register statik to serve Swagger UI and static files
 	_ "github.com/mikhailsoldatkin/auth/statik"
 )
 
-// App represents the application with its dependencies and GRPC server.
+// App represents the application with its dependencies and gRPC, HTTP and Swagger servers.
 type App struct {
 	serviceProvider *serviceProvider
 	grpcServer      *grpc.Server
@@ -50,7 +48,8 @@ func NewApp(ctx context.Context) (*App, error) {
 	return a, nil
 }
 
-// Run starts the GRPC server and handles graceful shutdown.
+// Run starts the GRPC server, HTTP server, Swagger server, and Kafka consumer.
+// It handles graceful shutdown by waiting for context cancellation or termination signals.
 func (a *App) Run(ctx context.Context) error {
 	defer func() {
 		closer.CloseAll()
@@ -102,6 +101,8 @@ func (a *App) Run(ctx context.Context) error {
 	return nil
 }
 
+// gracefulShutdown handles the termination process by waiting for either a context cancellation
+// or termination signals. It cancels the context and waits for all goroutines to finish.
 func gracefulShutdown(ctx context.Context, cancel context.CancelFunc, wg *sync.WaitGroup) {
 	select {
 	case <-ctx.Done():
@@ -116,6 +117,8 @@ func gracefulShutdown(ctx context.Context, cancel context.CancelFunc, wg *sync.W
 	}
 }
 
+// waitSignal creates a channel to receive termination signals (SIGINT, SIGTERM).
+// It returns the channel to allow waiting for these signals.
 func waitSignal() chan os.Signal {
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, syscall.SIGINT, syscall.SIGTERM)
@@ -142,6 +145,7 @@ func (a *App) initDeps(ctx context.Context) error {
 	return nil
 }
 
+// initConfig loads the application configuration.
 func (a *App) initConfig(_ context.Context) error {
 	_, err := config.Load()
 	if err != nil {
@@ -151,11 +155,13 @@ func (a *App) initConfig(_ context.Context) error {
 	return nil
 }
 
+// initServiceProvider initializes the service provider used by the application.
 func (a *App) initServiceProvider(_ context.Context) error {
 	a.serviceProvider = newServiceProvider()
 	return nil
 }
 
+// initGRPCServer initializes the GRPC server.
 func (a *App) initGRPCServer(ctx context.Context) error {
 	a.grpcServer = grpc.NewServer(
 		grpc.Creds(insecure.NewCredentials()),
@@ -168,6 +174,7 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 	return nil
 }
 
+// initHTTPServer initializes the HTTP server and sets up the GRPC gateway for HTTP-to-GRPC translation.
 func (a *App) initHTTPServer(ctx context.Context) error {
 	mux := runtime.NewServeMux()
 
@@ -196,6 +203,7 @@ func (a *App) initHTTPServer(ctx context.Context) error {
 	return nil
 }
 
+// initSwaggerServer initializes the Swagger server to serve Swagger UI and API documentation.
 func (a *App) initSwaggerServer(_ context.Context) error {
 	statikFs, err := fs.New()
 	if err != nil {
@@ -215,6 +223,7 @@ func (a *App) initSwaggerServer(_ context.Context) error {
 	return nil
 }
 
+// runHTTPServer starts the HTTP server and listens for incoming requests.
 func (a *App) runHTTPServer() error {
 	log.Printf("HTTP server is running on %d", a.serviceProvider.config.HTTP.Port)
 
@@ -226,6 +235,7 @@ func (a *App) runHTTPServer() error {
 	return nil
 }
 
+// runSwaggerServer starts the Swagger server to serve API documentation.
 func (a *App) runSwaggerServer() error {
 	log.Printf("Swagger server is running on %d", a.serviceProvider.config.Swagger.Port)
 
@@ -237,6 +247,7 @@ func (a *App) runSwaggerServer() error {
 	return nil
 }
 
+// serveSwaggerFile returns an HTTP handler function to serve Swagger files.
 func serveSwaggerFile(path string) http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
 		log.Printf("Serving swagger file: %s", path)
@@ -279,6 +290,7 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 	}
 }
 
+// runGRPCServer starts the GRPC server and listens for incoming GRPC requests.
 func (a *App) runGRPCServer() error {
 	lis, err := net.Listen("tcp", a.serviceProvider.config.GRPC.Address)
 	if err != nil {
