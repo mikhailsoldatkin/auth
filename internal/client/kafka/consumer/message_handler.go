@@ -7,32 +7,34 @@ import (
 	"github.com/IBM/sarama"
 )
 
+// Handler is a function type that processes Kafka messages.
 type Handler func(ctx context.Context, msg *sarama.ConsumerMessage) error
 
+// GroupHandler implements sarama.ConsumerGroupHandler and is used to handle Kafka messages.
 type GroupHandler struct {
 	msgHandler Handler
 }
 
+// NewGroupHandler creates a new GroupHandler instance.
 func NewGroupHandler() *GroupHandler {
 	return &GroupHandler{}
 }
 
-// Setup запускается в начале новой сессии до вызова ConsumeClaim
+// Setup is called at the beginning of a new session before ConsumeClaim.
+// It is used to set up any state needed for processing.
 func (c *GroupHandler) Setup(sarama.ConsumerGroupSession) error {
 	return nil
 }
 
-// Cleanup запускается в конце жизни сессии после того как все горутины ConsumeClaim завершаться
+// Cleanup is called at the end of the session after all ConsumeClaim calls have finished.
+// It is used to clean up resources.
 func (c *GroupHandler) Cleanup(sarama.ConsumerGroupSession) error {
 	return nil
 }
 
-// ConsumeClaim должен запустить потребительский цикл сообщений ConsumerGroupClaim().
-// После закрытия канала Messages() обработчик должен завершить обработку
+// ConsumeClaim starts a loop to process messages from the claim.
+// It is called when the consumer is assigned a new claim and handles messages until the session ends.
 func (c *GroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
-	// Код ниже не стоит перемещать в горутину, так как ConsumeClaim
-	// уже запускается в горутине, см.:
-	// https://github.com/IBM/sarama/blob/main/consumer_group.go#L869
 	for {
 		select {
 		case message, ok := <-claim.Messages():
@@ -54,10 +56,6 @@ func (c *GroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim s
 
 			session.MarkMessage(message, "")
 
-		// Должен вернуться, когда `session.Context()` завершен.
-		// В противном случае возникнет `ErrRebalanceInProgress` или `read tcp <ip>:<port>: i/o timeout`
-		// при перебалансировке кафки. см.:
-		// https://github.com/IBM/sarama/issues/1192
 		case <-session.Context().Done():
 			log.Printf("session context done\n")
 			return nil
