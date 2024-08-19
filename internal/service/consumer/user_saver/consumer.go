@@ -2,6 +2,7 @@ package user_saver
 
 import (
 	"context"
+	"log"
 
 	"github.com/mikhailsoldatkin/auth/internal/client/kafka"
 	"github.com/mikhailsoldatkin/auth/internal/config"
@@ -33,6 +34,7 @@ func NewService(
 // It listens for messages and handles errors that occur during processing.
 // The method returns when the context is cancelled or an error occurs.
 func (s *Service) RunConsumer(ctx context.Context) error {
+	log.Println("Kafka consumer is running")
 	for {
 		select {
 		case <-ctx.Done():

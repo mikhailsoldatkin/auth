@@ -58,7 +58,6 @@ func newServiceProvider() *serviceProvider {
 }
 
 // Config returns the configuration used by the serviceProvider.
-// If the config is not loaded, it loads the configuration from the source.
 func (s *serviceProvider) Config() *config.Config {
 	if s.config == nil {
 		cfg, err := config.Load()
@@ -71,8 +70,7 @@ func (s *serviceProvider) Config() *config.Config {
 	return s.config
 }
 
-// DBClient returns the database client used by the serviceProvider.
-// If the client is not initialized, it creates a new database client and performs a health check.
+// DBClient returns the database client used by the serviceProvider, performs a health check.
 func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 	if s.dbClient == nil {
 		cl, err := pg.New(ctx, s.Config().DB.PostgresDSN)
@@ -93,7 +91,6 @@ func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 }
 
 // TxManager returns the transaction manager used by the serviceProvider.
-// If the transaction manager is not initialized, it creates a new transaction manager.
 func (s *serviceProvider) TxManager(ctx context.Context) db.TxManager {
 	if s.txManager == nil {
 		s.txManager = transaction.NewTransactionManager(s.DBClient(ctx).DB())
@@ -103,7 +100,6 @@ func (s *serviceProvider) TxManager(ctx context.Context) db.TxManager {
 }
 
 // PGRepository returns the PostgreSQL repository used by the serviceProvider.
-// If the repository is not initialized, it creates a new PostgreSQL repository.
 func (s *serviceProvider) PGRepository(ctx context.Context) repository.UserRepository {
 	if s.pgRepository == nil {
 		s.pgRepository = pgRepository.NewRepository(s.DBClient(ctx))
@@ -113,7 +109,6 @@ func (s *serviceProvider) PGRepository(ctx context.Context) repository.UserRepos
 }
 
 // RedisPool returns the Redis connection pool used by the serviceProvider.
-// If the pool is not initialized, it creates a new Redis connection pool with the configured settings.
 func (s *serviceProvider) RedisPool() *redigo.Pool {
 	if s.redisPool == nil {
 		s.redisPool = &redigo.Pool{
@@ -130,8 +125,7 @@ func (s *serviceProvider) RedisPool() *redigo.Pool {
 	return s.redisPool
 }
 
-// RedisClient returns the Redis client used by the serviceProvider.
-// If the client is not initialized, it creates a new Redis client and performs a health check.
+// RedisClient returns the Redis client used by the serviceProvider, performs a health check.
 func (s *serviceProvider) RedisClient(ctx context.Context) cache.RedisClient {
 	if s.redisClient == nil {
 		cl := redis.NewClient(s.RedisPool(), redis.Config(s.config.Redis))
@@ -147,7 +141,6 @@ func (s *serviceProvider) RedisClient(ctx context.Context) cache.RedisClient {
 }
 
 // RedisRepository returns the Redis repository used by the serviceProvider.
-// If the repository is not initialized, it creates a new Redis repository.
 func (s *serviceProvider) RedisRepository(ctx context.Context) repository.UserRepository {
 	if s.redisRepository == nil {
 		s.redisRepository = redisRepository.NewRepository(s.RedisClient(ctx))
@@ -157,7 +150,6 @@ func (s *serviceProvider) RedisRepository(ctx context.Context) repository.UserRe
 }
 
 // LogRepository returns the log repository used by the serviceProvider.
-// If the repository is not initialized, it creates a new log repository.
 func (s *serviceProvider) LogRepository(ctx context.Context) repository.LogRepository {
 	if s.logRepository == nil {
 		s.logRepository = logRepository.NewRepository(s.DBClient(ctx))
@@ -167,7 +159,6 @@ func (s *serviceProvider) LogRepository(ctx context.Context) repository.LogRepos
 }
 
 // UserSaverConsumer returns the user saver consumer service used by the serviceProvider.
-// If the service is not initialized, it creates a new user saver consumer service.
 func (s *serviceProvider) UserSaverConsumer(ctx context.Context) service.ConsumerService {
 	if s.userSaverConsumer == nil {
 		s.userSaverConsumer = userSaverConsumer.NewService(
@@ -181,7 +172,6 @@ func (s *serviceProvider) UserSaverConsumer(ctx context.Context) service.Consume
 }
 
 // Consumer returns the Kafka consumer used by the serviceProvider. If the consumer is not initialized,
-// it creates a new Kafka consumer and registers it for cleanup.
 func (s *serviceProvider) Consumer() kafka.Consumer {
 	if s.consumer == nil {
 		s.consumer = kafkaConsumer.NewConsumer(
@@ -194,20 +184,11 @@ func (s *serviceProvider) Consumer() kafka.Consumer {
 	return s.consumer
 }
 
-const (
-	maxRetries = 3
-	retryDelay = 2 * time.Second
-)
-
 // ConsumerGroup returns the Kafka consumer group used by the serviceProvider.
-// If the consumer group is not initialized, it creates a new Kafka consumer group with the configured settings.
 func (s *serviceProvider) ConsumerGroup() sarama.ConsumerGroup {
-
-	brokerAddress := []string{"kafka1:29092", "kafka2:29093", "kafka3:29094"}
-
 	if s.consumerGroup == nil {
 		consumerGroup, err := sarama.NewConsumerGroup(
-			brokerAddress,
+			s.config.KafkaConsumer.Brokers,
 			s.config.KafkaConsumer.GroupID,
 			s.config.KafkaConsumer.Config,
 		)
@@ -223,7 +204,6 @@ func (s *serviceProvider) ConsumerGroup() sarama.ConsumerGroup {
 }
 
 // ConsumerGroupHandler returns the Kafka consumer group handler used by the serviceProvider.
-// If the handler is not initialized, it creates a new Kafka consumer group handler.
 func (s *serviceProvider) ConsumerGroupHandler() *kafkaConsumer.GroupHandler {
 	if s.consumerGroupHandler == nil {
 		s.consumerGroupHandler = kafkaConsumer.NewGroupHandler()
@@ -233,7 +213,6 @@ func (s *serviceProvider) ConsumerGroupHandler() *kafkaConsumer.GroupHandler {
 }
 
 // UserService returns the user service used by the serviceProvider.
-// If the user service is not initialized, it creates a new user service.
 func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
 	if s.userService == nil {
 		s.userService = userService.NewService(
@@ -248,7 +227,6 @@ func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
 }
 
 // UserImplementation returns the user implementation used by the serviceProvider.
-// If the implementation is not initialized, it creates a new user implementation.
 func (s *serviceProvider) UserImplementation(ctx context.Context) *user.Implementation {
 	if s.userImplementation == nil {
 		s.userImplementation = user.NewImplementation(s.UserService(ctx))
