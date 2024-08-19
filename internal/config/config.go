@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/IBM/sarama"
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
 )
@@ -52,13 +53,21 @@ type Redis struct {
 	Address     string `env:"-"`
 }
 
+// KafkaConsumer represents configuration for KafkaConsumer.
+type KafkaConsumer struct {
+	Brokers []string `env:"KAFKA_BROKERS" env-required:"true"`
+	GroupID string   `env:"KAFKA_GROUP_ID" env-required:"true"`
+	Config  *sarama.Config
+}
+
 // Config represents the overall application configuration.
 type Config struct {
-	DB      DB
-	GRPC    GRPC
-	Redis   Redis
-	HTTP    HTTP
-	Swagger Swagger
+	DB            DB
+	GRPC          GRPC
+	Redis         Redis
+	HTTP          HTTP
+	Swagger       Swagger
+	KafkaConsumer KafkaConsumer
 }
 
 // Load reads configuration from .env file.
@@ -89,6 +98,12 @@ func Load() (*Config, error) {
 	cfg.GRPC.Address = fmt.Sprintf("%s:%d", cfg.GRPC.Host, cfg.GRPC.Port)
 	cfg.HTTP.Address = fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port)
 	cfg.Swagger.Address = fmt.Sprintf("%s:%d", cfg.Swagger.Host, cfg.Swagger.Port)
+
+	kafkaConfig := sarama.NewConfig()
+	kafkaConfig.Version = sarama.V3_6_0_0
+	kafkaConfig.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{sarama.NewBalanceStrategyRoundRobin()}
+	kafkaConfig.Consumer.Offsets.Initial = sarama.OffsetOldest
+	cfg.KafkaConsumer.Config = kafkaConfig
 
 	return &cfg, nil
 }
