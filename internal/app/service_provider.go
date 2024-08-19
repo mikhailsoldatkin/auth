@@ -203,11 +203,13 @@ const (
 // If the consumer group is not initialized, it creates a new Kafka consumer group with the configured settings.
 func (s *serviceProvider) ConsumerGroup() sarama.ConsumerGroup {
 
+	brokerAddress := []string{"kafka1:29092", "kafka2:29093", "kafka3:29094"}
+
 	if s.consumerGroup == nil {
 		var err error
 		for i := 0; i < maxRetries; i++ {
 			s.consumerGroup, err = sarama.NewConsumerGroup(
-				s.config.KafkaConsumer.Brokers,
+				brokerAddress,
 				s.config.KafkaConsumer.GroupID,
 				s.config.KafkaConsumer.Config,
 			)

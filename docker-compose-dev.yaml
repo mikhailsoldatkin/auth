@@ -15,12 +15,6 @@ services:
         condition: service_healthy
       db:
         condition: service_started
-      kafka1:
-        condition: service_healthy
-      kafka2:
-        condition: service_healthy
-      kafka3:
-        condition: service_healthy
 
   db:
     image: postgres:16.3-alpine3.20
@@ -59,12 +53,10 @@ services:
     hostname: zookeeper
     container_name: zookeeper
     ports:
-      - ${ZOOKEEPER_CLIENT_PORT}:${ZOOKEEPER_CLIENT_PORT}
+      - "2181:2181"                     # порт для клиентских соединений Zookeeper
     environment:
-      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_CLIENT_PORT}
-      ZOOKEEPER_TICK_TIME: ${ZOOKEEPER_TICK_TIME}
-    env_file:
-      - .env
+      ZOOKEEPER_CLIENT_PORT: 2181       # порт для клиентских соединений Zookeeper
+      ZOOKEEPER_TICK_TIME: 2000         # основной интервал времени (в миллисекундах), используемый Zookeeper
 
   kafka1:
     image: confluentinc/cp-kafka:7.7.0
@@ -73,20 +65,16 @@ services:
     depends_on:
       - zookeeper
     ports:
-      - "29092:9092"
+      - "9092:9092" # порт для клиентских соединений Kafka
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:${ZOOKEEPER_CLIENT_PORT}
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
-    healthcheck:
-      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:29092" ]
-      interval: 10s
-      timeout: 10s
-      retries: 5
+      KAFKA_BROKER_ID: 1 # уникальный идентификатор брокера Kafka
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181' # адрес подключения к Zookeeper
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT # указывает протоколы безопасности для слушателей
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:29092,PLAINTEXT_HOST://localhost:9092 # указывает, какие адреса будут использоваться для общения с Kafka
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3 # фактор репликации топика
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0 # время задержки перед началом перебалансировки группы
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2 # минимальное количество реплик, которые должны быть в синхронизации для топика состояния транзакции
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3 # фактор репликации топика состояния транзакции
 
   kafka2:
     image: confluentinc/cp-kafka:7.7.0
@@ -95,20 +83,16 @@ services:
     depends_on:
       - zookeeper
     ports:
-      - "29093:9093"
+      - "9093:9093"
     environment:
       KAFKA_BROKER_ID: 2
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:${ZOOKEEPER_CLIENT_PORT}
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:29093,PLAINTEXT_HOST://localhost:9093
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:29093,PLAINTEXT_HOST://localhost:9093
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
-    healthcheck:
-      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:29093" ]
-      interval: 10s
-      timeout: 10s
-      retries: 5
 
   kafka3:
     image: confluentinc/cp-kafka:7.7.0
@@ -117,28 +101,24 @@ services:
     depends_on:
       - zookeeper
     ports:
-      - "29094:9094"
+      - "9094:9094"
     environment:
       KAFKA_BROKER_ID: 3
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:${ZOOKEEPER_CLIENT_PORT}
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:29094,PLAINTEXT_HOST://localhost:9094
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:29094,PLAINTEXT_HOST://localhost:9094
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
-    healthcheck:
-      test: [ "CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:29094" ]
-      interval: 10s
-      timeout: 10s
-      retries: 5
 
   kafka-ui:
     container_name: kafka-ui
     image: provectuslabs/kafka-ui:v0.7.2
     ports:
-      - "${KAFKA_UI_PORT}:${HTTP_PORT}"
-    env_file:
-      - .env
+      - "8082:8080"
+    environment:
+      DYNAMIC_CONFIG_ENABLED: true
 
 volumes:
   pgdata:

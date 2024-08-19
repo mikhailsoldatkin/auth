@@ -48,6 +48,7 @@ func (c *Consumer) consume(ctx context.Context, topicName string) error {
 			if errors.Is(err, sarama.ErrClosedConsumerGroup) {
 				return nil
 			}
+
 			return err
 		}
 
