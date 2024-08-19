@@ -206,23 +206,17 @@ func (s *serviceProvider) ConsumerGroup() sarama.ConsumerGroup {
 	brokerAddress := []string{"kafka1:29092", "kafka2:29093", "kafka3:29094"}
 
 	if s.consumerGroup == nil {
-		var err error
-		for i := 0; i < maxRetries; i++ {
-			s.consumerGroup, err = sarama.NewConsumerGroup(
-				brokerAddress,
-				s.config.KafkaConsumer.GroupID,
-				s.config.KafkaConsumer.Config,
-			)
-			if err == nil {
-				log.Printf("Successfully created Kafka consumer group (attempt %d/%d)", i+1, maxRetries)
-				break
-			}
-			log.Printf("Failed to create Kafka consumer group (attempt %d/%d): %v", i+1, maxRetries, err)
-			time.Sleep(retryDelay)
-		}
+		consumerGroup, err := sarama.NewConsumerGroup(
+			brokerAddress,
+			s.config.KafkaConsumer.GroupID,
+			s.config.KafkaConsumer.Config,
+		)
+
 		if err != nil {
-			log.Fatalf("Failed to create Kafka consumer group after %d attempts: %v", maxRetries, err)
+			log.Fatalf("failed to create consumer group: %v", err)
 		}
+
+		s.consumerGroup = consumerGroup
 	}
 
 	return s.consumerGroup
