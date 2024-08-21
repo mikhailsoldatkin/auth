@@ -1,4 +1,4 @@
-package user_saver
+package user_create
 
 import (
 	"context"
@@ -10,9 +10,9 @@ import (
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 )
 
-// UserSaveHandler processes incoming Kafka messages.
+// UserCreateHandler processes incoming Kafka messages.
 // It unmarshals the message, creates a new user in the repositories, and logs the result.
-func (s *consumerService) UserSaveHandler(ctx context.Context, msg *sarama.ConsumerMessage) error {
+func (s *consumerService) UserCreateHandler(ctx context.Context, msg *sarama.ConsumerMessage) error {
 	user := &model.User{}
 	if err := json.Unmarshal(msg.Value, user); err != nil {
 		log.Printf("error unmarshalling message: %v\n", err)

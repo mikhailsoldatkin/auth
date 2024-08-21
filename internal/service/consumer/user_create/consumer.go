@@ -1,4 +1,4 @@
-package user_saver
+package user_create
 
 import (
 	"context"
@@ -60,7 +60,7 @@ func (s *consumerService) run(ctx context.Context) <-chan error {
 
 	go func() {
 		defer close(errChan)
-		errChan <- s.consumer.Consume(ctx, s.config.Topic, s.UserSaveHandler)
+		errChan <- s.consumer.Consume(ctx, s.config.Topic, s.UserCreateHandler)
 	}()
 
 	return errChan

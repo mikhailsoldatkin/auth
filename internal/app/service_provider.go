@@ -23,7 +23,7 @@ import (
 	pgRepository "github.com/mikhailsoldatkin/auth/internal/repository/user/pg"
 	redisRepository "github.com/mikhailsoldatkin/auth/internal/repository/user/redis"
 	"github.com/mikhailsoldatkin/auth/internal/service"
-	userSaverConsumer "github.com/mikhailsoldatkin/auth/internal/service/consumer/user_saver"
+	userSaverConsumer "github.com/mikhailsoldatkin/auth/internal/service/consumer/user_create"
 	userService "github.com/mikhailsoldatkin/auth/internal/service/user"
 )
 
