@@ -3,7 +3,6 @@ package consumer
 import (
 	"context"
 	"log"
-	"strings"
 
 	"github.com/IBM/sarama"
 	"github.com/pkg/errors"
@@ -43,7 +42,7 @@ func (c *Consumer) Close() error {
 // This method handles rebalancing and errors.
 func (c *Consumer) consume(ctx context.Context, topicName string) error {
 	for {
-		err := c.consumerGroup.Consume(ctx, strings.Split(topicName, ","), c.consumerGroupHandler)
+		err := c.consumerGroup.Consume(ctx, []string{topicName}, c.consumerGroupHandler)
 		if err != nil {
 			if errors.Is(err, sarama.ErrClosedConsumerGroup) {
 				return nil

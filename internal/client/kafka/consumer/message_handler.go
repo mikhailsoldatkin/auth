@@ -23,12 +23,14 @@ func NewGroupHandler() *GroupHandler {
 // Setup is called at the beginning of a new session before ConsumeClaim.
 // It is used to set up any state needed for processing.
 func (c *GroupHandler) Setup(sarama.ConsumerGroupSession) error {
+	log.Println("Kafka consumer group session setup")
 	return nil
 }
 
 // Cleanup is called at the end of the session after all ConsumeClaim calls have finished.
 // It is used to clean up resources.
 func (c *GroupHandler) Cleanup(sarama.ConsumerGroupSession) error {
+	log.Println("Kafka consumer group session cleanup")
 	return nil
 }
 

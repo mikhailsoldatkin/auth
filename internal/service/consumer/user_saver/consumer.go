@@ -20,9 +20,9 @@ type consumerService struct {
 	config          config.KafkaConsumer
 }
 
-// NewService creates a new instance of consumerService.
+// NewConsumerService creates a new instance of consumerService.
 // It initializes the service with a user repositories, Kafka consumer, Kafka config.
-func NewService(
+func NewConsumerService(
 	pgRepository repository.UserRepository,
 	redisRepository repository.UserRepository,
 	consumer kafka.Consumer,

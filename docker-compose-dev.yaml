@@ -84,6 +84,7 @@ services:
       KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS_1}
     volumes:
       - kafka1_data:/var/lib/kafka/data
+    restart: always
 
   kafka2:
     image: confluentinc/cp-kafka:7.7.0
@@ -106,6 +107,7 @@ services:
       KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS_2}
     volumes:
       - kafka2_data:/var/lib/kafka/data
+    restart: always
 
   kafka3:
     image: confluentinc/cp-kafka:7.7.0
@@ -128,6 +130,7 @@ services:
       KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS_3}
     volumes:
       - kafka3_data:/var/lib/kafka/data
+    restart: always
 
   kafka-ui:
     container_name: kafka-ui

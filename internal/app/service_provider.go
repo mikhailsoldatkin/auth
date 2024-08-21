@@ -161,7 +161,7 @@ func (s *serviceProvider) LogRepository(ctx context.Context) repository.LogRepos
 // UserSaverConsumer returns the user saver consumer service used by the serviceProvider.
 func (s *serviceProvider) UserSaverConsumer(ctx context.Context) service.ConsumerService {
 	if s.userSaverConsumer == nil {
-		s.userSaverConsumer = userSaverConsumer.NewService(
+		s.userSaverConsumer = userSaverConsumer.NewConsumerService(
 			s.PGRepository(ctx),
 			s.RedisRepository(ctx),
 			s.Consumer(),
@@ -172,7 +172,7 @@ func (s *serviceProvider) UserSaverConsumer(ctx context.Context) service.Consume
 	return s.userSaverConsumer
 }
 
-// Consumer returns the Kafka consumer used by the serviceProvider. If the consumer is not initialized,
+// Consumer returns the Kafka consumer used by the serviceProvider.
 func (s *serviceProvider) Consumer() kafka.Consumer {
 	if s.consumer == nil {
 		s.consumer = kafkaConsumer.NewConsumer(
