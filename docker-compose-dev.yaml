@@ -82,7 +82,8 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS_1}
-
+    volumes:
+      - kafka1_data:/var/lib/kafka/data
 
   kafka2:
     image: confluentinc/cp-kafka:7.7.0
@@ -103,6 +104,8 @@ services:
     environment:
       KAFKA_BROKER_ID: 2
       KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS_2}
+    volumes:
+      - kafka2_data:/var/lib/kafka/data
 
   kafka3:
     image: confluentinc/cp-kafka:7.7.0
@@ -123,6 +126,8 @@ services:
     environment:
       KAFKA_BROKER_ID: 3
       KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS_3}
+    volumes:
+      - kafka3_data:/var/lib/kafka/data
 
   kafka-ui:
     container_name: kafka-ui
@@ -135,3 +140,6 @@ services:
 volumes:
   pgdata:
   redisdata:
+  kafka1_data:
+  kafka2_data:
+  kafka3_data:
