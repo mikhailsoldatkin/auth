@@ -133,6 +133,7 @@ jobs:
           echo REDIS_CONNECTION_TIMEOUT_SEC=${{ env.REDIS_CONNECTION_TIMEOUT_SEC }} >> .env
           echo REDIS_MAX_IDLE=${{ env.REDIS_MAX_IDLE }} >> .env
           echo REDIS_MAX_ACTIVE=${{ env.REDIS_MAX_ACTIVE }} >> .env
+          echo REDIS_IDLE_TIMEOUT_SEC=${{ env.REDIS_IDLE_TIMEOUT_SEC }} >> .env
           
           echo KAFKA_HOST_PORT_1=${{ env.KAFKA_HOST_PORT_1 }} >> .env
           echo KAFKA_PORT_1=${{ env.KAFKA_PORT_1 }} >> .env
