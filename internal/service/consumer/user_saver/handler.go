@@ -11,21 +11,29 @@ import (
 )
 
 // UserSaveHandler processes incoming Kafka messages.
-// It unmarshals the message, creates a new user in the repository, and logs the result.
-func (s *Service) UserSaveHandler(ctx context.Context, msg *sarama.ConsumerMessage) error {
+// It unmarshals the message, creates a new user in the repositories, and logs the result.
+func (s *consumerService) UserSaveHandler(ctx context.Context, msg *sarama.ConsumerMessage) error {
 	user := &model.User{}
 	if err := json.Unmarshal(msg.Value, user); err != nil {
 		log.Printf("error unmarshalling message: %v\n", err)
 		return err
 	}
 
-	id, err := s.userRepository.Create(ctx, user)
+	id, err := s.pgRepository.Create(ctx, user)
 	if err != nil {
-		log.Printf("error creating user: %v\n", err)
+		log.Printf("error creating user id db: %v\n", err)
 		return err
 	}
 
-	log.Printf("User with ID %d created\n", id)
+	user.ID = id
+	_, err = s.redisRepository.Create(ctx, user)
+	if err != nil {
+		// нужно ли возвращать ошибку? или можно скипнуть кэш
+		log.Printf("error creating user in cache: %v\n", err)
+		return err
+	}
+
+	log.Printf("user with ID %d created\n", id)
 
 	return nil
 }

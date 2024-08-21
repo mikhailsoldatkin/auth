@@ -90,6 +90,7 @@ func (a *App) Run(ctx context.Context) error {
 
 	go func() {
 		defer wg.Done()
+
 		err := a.serviceProvider.UserSaverConsumer(ctx).RunConsumer(ctx)
 		if err != nil {
 			log.Printf("failed to run Kafka consumer: %s", err.Error())

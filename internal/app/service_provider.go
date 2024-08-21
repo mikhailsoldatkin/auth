@@ -163,6 +163,7 @@ func (s *serviceProvider) UserSaverConsumer(ctx context.Context) service.Consume
 	if s.userSaverConsumer == nil {
 		s.userSaverConsumer = userSaverConsumer.NewService(
 			s.PGRepository(ctx),
+			s.RedisRepository(ctx),
 			s.Consumer(),
 			s.config.KafkaConsumer,
 		)
@@ -215,7 +216,7 @@ func (s *serviceProvider) ConsumerGroupHandler() *kafkaConsumer.GroupHandler {
 // UserService returns the user service used by the serviceProvider.
 func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
 	if s.userService == nil {
-		s.userService = userService.NewService(
+		s.userService = userService.NewUserService(
 			s.PGRepository(ctx),
 			s.RedisRepository(ctx),
 			s.LogRepository(ctx),

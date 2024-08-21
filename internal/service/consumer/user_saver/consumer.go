@@ -7,33 +7,39 @@ import (
 	"github.com/mikhailsoldatkin/auth/internal/client/kafka"
 	"github.com/mikhailsoldatkin/auth/internal/config"
 	"github.com/mikhailsoldatkin/auth/internal/repository"
+	"github.com/mikhailsoldatkin/auth/internal/service"
 )
 
-// Service implements the ConsumerService interface for handling Kafka messages related to user operations.
-type Service struct {
-	userRepository repository.UserRepository
-	consumer       kafka.Consumer
-	config         config.KafkaConsumer
+var _ service.ConsumerService = (*consumerService)(nil)
+
+// consumerService implements the ConsumerService interface for handling Kafka messages related to user operations.
+type consumerService struct {
+	pgRepository    repository.UserRepository
+	redisRepository repository.UserRepository
+	consumer        kafka.Consumer
+	config          config.KafkaConsumer
 }
 
-// NewService creates a new instance of Service.
-// It initializes the service with a user repository and Kafka consumer.
+// NewService creates a new instance of consumerService.
+// It initializes the service with a user repositories, Kafka consumer, Kafka config.
 func NewService(
-	userRepository repository.UserRepository,
+	pgRepository repository.UserRepository,
+	redisRepository repository.UserRepository,
 	consumer kafka.Consumer,
 	config config.KafkaConsumer,
-) *Service {
-	return &Service{
-		userRepository: userRepository,
-		consumer:       consumer,
-		config:         config,
+) service.ConsumerService {
+	return &consumerService{
+		pgRepository:    pgRepository,
+		redisRepository: redisRepository,
+		consumer:        consumer,
+		config:          config,
 	}
 }
 
 // RunConsumer starts the Kafka consumer to process messages.
 // It listens for messages and handles errors that occur during processing.
 // The method returns when the context is cancelled or an error occurs.
-func (s *Service) RunConsumer(ctx context.Context) error {
+func (s *consumerService) RunConsumer(ctx context.Context) error {
 	log.Println("Kafka consumer is running")
 	for {
 		select {
@@ -49,7 +55,7 @@ func (s *Service) RunConsumer(ctx context.Context) error {
 
 // run initiates a new goroutine for consuming Kafka messages.
 // It returns a channel that will receive errors encountered during consumption.
-func (s *Service) run(ctx context.Context) <-chan error {
+func (s *consumerService) run(ctx context.Context) <-chan error {
 	errChan := make(chan error)
 
 	go func() {

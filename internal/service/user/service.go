@@ -9,23 +9,23 @@ import (
 	"github.com/mikhailsoldatkin/auth/internal/service"
 )
 
-var _ service.UserService = (*serv)(nil)
+var _ service.UserService = (*userServ)(nil)
 
-type serv struct {
+type userServ struct {
 	pgRepository    repository.UserRepository
 	redisRepository repository.UserRepository
 	logRepository   repository.LogRepository
 	txManager       db.TxManager
 }
 
-// NewService creates a new instance of the user service.
-func NewService(
+// NewUserService creates a new instance of the user service.
+func NewUserService(
 	pgRepository repository.UserRepository,
 	redisRepository repository.UserRepository,
 	logRepository repository.LogRepository,
 	txManager db.TxManager,
 ) service.UserService {
-	return &serv{
+	return &userServ{
 		pgRepository:    pgRepository,
 		redisRepository: redisRepository,
 		logRepository:   logRepository,
@@ -49,7 +49,7 @@ func (noOpTxManager) ReadCommitted(ctx context.Context, f db.Handler) error {
 
 // NewMockService creates a new mock instance of the user service.
 func NewMockService(deps ...any) service.UserService {
-	srv := serv{
+	srv := userServ{
 		logRepository: noOpLogRepository{},
 		txManager:     noOpTxManager{},
 	}
