@@ -7,7 +7,7 @@ import (
 
 // Delete removes a user from the system by ID.
 // It deletes the user from both the database and the cache, logs operation.
-func (s *userServ) Delete(ctx context.Context, id int64) error {
+func (s *userService) Delete(ctx context.Context, id int64) error {
 	err := s.pgRepository.Delete(ctx, id)
 	if err != nil {
 		return err

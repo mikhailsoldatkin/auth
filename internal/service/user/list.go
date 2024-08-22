@@ -7,7 +7,7 @@ import (
 )
 
 // List retrieves a list of users from the system based on the provided limit and offset.
-func (s *userServ) List(ctx context.Context, limit, offset int64) ([]*model.User, error) {
+func (s *userService) List(ctx context.Context, limit, offset int64) ([]*model.User, error) {
 	users, err := s.pgRepository.List(ctx, limit, offset)
 	if err != nil {
 		return nil, err
