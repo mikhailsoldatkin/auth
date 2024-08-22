@@ -1,6 +1,8 @@
 include .env
 LOCAL_BIN:=$(CURDIR)/bin
 USER_V1:=user_v1
+AUTH_V1:=auth_v1
+ACCESS_V1:=access_v1
 REPO:=github.com/mikhailsoldatkin/auth
 CERT_FOLDER:=cert
 
@@ -29,6 +31,8 @@ get-deps:
 generate:
 	mkdir -p pkg/swagger
 	make generate-user-api
+	make generate-auth-api
+	make generate-access-api
 	$(LOCAL_BIN)/statik -f -src=pkg/swagger/ -include='*.css,*.html,*.js,*.json,*.png'
 
 generate-user-api:
@@ -45,6 +49,24 @@ generate-user-api:
 	--openapiv2_out=allow_merge=true,merge_file_name=api:pkg/swagger \
 	--plugin=protoc-gen-openapiv2=bin/protoc-gen-openapiv2 \
 	api/$(USER_V1)/user.proto
+
+generate-auth-api:
+	mkdir -p pkg/$(AUTH_V1)
+	protoc --proto_path api/$(AUTH_V1) \
+	--go_out=pkg/$(AUTH_V1) --go_opt=paths=source_relative \
+	--plugin=protoc-gen-go=bin/protoc-gen-go \
+	--go-grpc_out=pkg/$(AUTH_V1) --go-grpc_opt=paths=source_relative \
+	--plugin=protoc-gen-go-grpc=bin/protoc-gen-go-grpc \
+	api/$(AUTH_V1)/auth.proto
+
+generate-access-api:
+	mkdir -p pkg/$(ACCESS_V1)
+	protoc --proto_path api/$(ACCESS_V1) \
+	--go_out=pkg/$(ACCESS_V1) --go_opt=paths=source_relative \
+	--plugin=protoc-gen-go=bin/protoc-gen-go \
+	--go-grpc_out=pkg/$(ACCESS_V1) --go-grpc_opt=paths=source_relative \
+	--plugin=protoc-gen-go-grpc=bin/protoc-gen-go-grpc \
+	api/$(ACCESS_V1)/access.proto
 
 
 local-migration-status:
