@@ -7,17 +7,19 @@ import (
 
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/gojuno/minimock/v3"
-	userAPI "github.com/mikhailsoldatkin/auth/internal/api/user"
-	"github.com/mikhailsoldatkin/auth/internal/customerrors"
-	"github.com/mikhailsoldatkin/auth/internal/service"
-	serviceMocks "github.com/mikhailsoldatkin/auth/internal/service/mocks"
-	"github.com/mikhailsoldatkin/auth/internal/service/user/converter"
-	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+
+	userAPI "github.com/mikhailsoldatkin/auth/internal/api/user"
+	"github.com/mikhailsoldatkin/auth/internal/customerrors"
+	"github.com/mikhailsoldatkin/auth/internal/service"
+	serviceMocks "github.com/mikhailsoldatkin/auth/internal/service/mocks"
+	"github.com/mikhailsoldatkin/auth/internal/service/user/converter"
+	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
+	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 )
 
 func TestUpdate(t *testing.T) {
@@ -35,7 +37,7 @@ func TestUpdate(t *testing.T) {
 		id           = gofakeit.Int64()
 		name         = gofakeit.Name()
 		validEmail   = gofakeit.Email()
-		invalidEmail = "email@com"
+		invalidEmail = "wrong email"
 
 		validReq = &pb.UpdateRequest{
 			Id:    id,
@@ -49,7 +51,7 @@ func TestUpdate(t *testing.T) {
 		}
 		wantResp     = &emptypb.Empty{}
 		wantErr      = fmt.Errorf("service error")
-		wantEmailErr = status.Errorf(codes.InvalidArgument, "invalid email format: %v", invalidEmail)
+		wantEmailErr = status.Errorf(codes.InvalidArgument, "rpc error: code = InvalidArgument desc = invalid UpdateRequest.Email: value must be a valid email address | caused by: mail: missing '@' or angle-addr")
 	)
 
 	tests := []struct {
@@ -74,7 +76,7 @@ func TestUpdate(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid email format",
+			name: "invalid email case",
 			args: args{
 				ctx: ctx,
 				req: invalidReq,
@@ -83,6 +85,9 @@ func TestUpdate(t *testing.T) {
 			err:  wantEmailErr,
 			userServiceMock: func(mc *minimock.Controller) service.UserService {
 				mock := serviceMocks.NewUserServiceMock(mc)
+				mock.UpdateMock.Set(func(_ context.Context, _ *model.User) error {
+					return wantEmailErr
+				})
 				return mock
 			},
 		},

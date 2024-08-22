@@ -7,13 +7,14 @@ import (
 
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/gojuno/minimock/v3"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/emptypb"
+
 	userAPI "github.com/mikhailsoldatkin/auth/internal/api/user"
 	"github.com/mikhailsoldatkin/auth/internal/customerrors"
 	"github.com/mikhailsoldatkin/auth/internal/service"
 	serviceMocks "github.com/mikhailsoldatkin/auth/internal/service/mocks"
 	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 func TestDelete(t *testing.T) {

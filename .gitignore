@@ -10,7 +10,8 @@
 # Environment variables file
 .env
 
-# Vendor directory
-/vendor/
+# Vendors
+*vendor*
 
-/coverage.out
+# Test coverage files
+*coverage*

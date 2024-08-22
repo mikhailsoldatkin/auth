@@ -26,6 +26,40 @@ env:
   REDIS_MAX_ACTIVE: 10
   REDIS_IDLE_TIMEOUT_SEC: 300
 
+  HOST: 0.0.0.0
+  HTTP_PORT: 8080
+  SWAGGER_PORT: 8090
+
+  KAFKA_HOST_PORT_1: 29092
+  KAFKA_PORT_1: 9092
+  KAFKA_HOST_PORT_2: 29093
+  KAFKA_PORT_2: 9093
+  KAFKA_HOST_PORT_3: 29094
+  KAFKA_PORT_3: 9094
+
+  KAFKA_BROKERS: kafka1:${KAFKA_HOST_PORT_1},kafka2:${KAFKA_HOST_PORT_2},kafka3:${KAFKA_HOST_PORT_3}
+  KAFKA_GROUP_ID: user
+  KAFKA_TOPIC: users
+  KAFKA_UI_PORT: 8082
+  DYNAMIC_CONFIG_ENABLED: true
+  ZOOKEEPER_CLIENT_PORT: 2181
+  ZOOKEEPER_TICK_TIME: 2000
+  KAFKA_ZOOKEEPER_CONNECT: zookeeper:${ZOOKEEPER_CLIENT_PORT}
+
+  KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+  KAFKA_ADVERTISED_LISTENERS_1: PLAINTEXT://kafka1:${KAFKA_HOST_PORT_1},PLAINTEXT_HOST://localhost:${KAFKA_PORT_1}
+  KAFKA_ADVERTISED_LISTENERS_2: PLAINTEXT://kafka2:${KAFKA_HOST_PORT_2},PLAINTEXT_HOST://localhost:${KAFKA_PORT_2}
+  KAFKA_ADVERTISED_LISTENERS_3: PLAINTEXT://kafka3:${KAFKA_HOST_PORT_3},PLAINTEXT_HOST://localhost:${KAFKA_PORT_3}
+  KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+  KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+  KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+  KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+
+  HEALTHCHECK_INTERVAL: 10s
+  HEALTHCHECK_TIMEOUT: 10s
+  HEALTHCHECK_RETRIES: 3
+  HEALTHCHECK_START_PERIOD: 10s
+
 jobs:
   build-and-test:
     name: Build and test
@@ -75,11 +109,20 @@ jobs:
           echo POSTGRES_DB=${{ secrets.POSTGRES_DB }} >> .env
           echo POSTGRES_USER=${{ secrets.POSTGRES_USER }} >> .env
           echo POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} >> .env
+          echo MIGRATIONS_DIR=${{ env.MIGRATIONS_DIR }} >> .env
           echo DB_PORT=${{ env.DB_PORT }} >> .env
           echo DB_HOST=${{ env.DB_HOST }} >> .env
           echo DB_HOST_PORT=${{ secrets.DB_HOST_PORT }} >> .env
-          echo MIGRATIONS_DIR=${{ env.MIGRATIONS_DIR }} >> .env
+          
           echo GRPC_PORT=${{ secrets.GRPC_PORT }} >> .env
+          echo GRPC_HOST=${{ env.HOST }} >> .env
+          
+          echo HTTP_PORT=${{ env.HTTP_PORT }} >> .env
+          echo HTTP_HOST=${{ env.HOST }} >> .env
+          
+          echo SWAGGER_PORT=${{ env.SWAGGER_PORT }} >> .env
+          echo SWAGGER_HOST=${{ env.HOST }} >> .env
+          
           echo DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }} >> .env
           echo APP_NAME=${{ env.APP_NAME }} >> .env
           echo MIGRATOR_NAME=${{ env.MIGRATOR_NAME }} >> .env
@@ -91,6 +134,36 @@ jobs:
           echo REDIS_MAX_IDLE=${{ env.REDIS_MAX_IDLE }} >> .env
           echo REDIS_MAX_ACTIVE=${{ env.REDIS_MAX_ACTIVE }} >> .env
           echo REDIS_IDLE_TIMEOUT_SEC=${{ env.REDIS_IDLE_TIMEOUT_SEC }} >> .env
+          
+          echo KAFKA_HOST_PORT_1=${{ env.KAFKA_HOST_PORT_1 }} >> .env
+          echo KAFKA_PORT_1=${{ env.KAFKA_PORT_1 }} >> .env
+          echo KAFKA_HOST_PORT_2=${{ env.KAFKA_HOST_PORT_2 }} >> .env
+          echo KAFKA_PORT_2=${{ env.KAFKA_PORT_2 }} >> .env
+          echo KAFKA_HOST_PORT_3=${{ env.KAFKA_HOST_PORT_3 }} >> .env
+          echo KAFKA_PORT_3=${{ env.KAFKA_PORT_3 }} >> .env
+          
+          echo KAFKA_BROKERS=${{ env.KAFKA_BROKERS }} >> .env
+          echo KAFKA_GROUP_ID=${{ env.KAFKA_GROUP_ID }} >> .env
+          echo KAFKA_TOPIC=${{ env.KAFKA_TOPIC }} >> .env
+          echo KAFKA_UI_PORT=${{ env.KAFKA_UI_PORT }} >> .env
+          echo DYNAMIC_CONFIG_ENABLED=${{ env.DYNAMIC_CONFIG_ENABLED }} >> .env
+          echo ZOOKEEPER_CLIENT_PORT=${{ env.ZOOKEEPER_CLIENT_PORT }} >> .env
+          echo ZOOKEEPER_TICK_TIME=${{ env.ZOOKEEPER_TICK_TIME }} >> .env
+          echo KAFKA_ZOOKEEPER_CONNECT=${{ env.KAFKA_ZOOKEEPER_CONNECT }} >> .env
+          
+          echo KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=${{ env.KAFKA_LISTENER_SECURITY_PROTOCOL_MAP }} >> .env
+          echo KAFKA_ADVERTISED_LISTENERS_1=${{ env.KAFKA_ADVERTISED_LISTENERS_1 }} >> .env
+          echo KAFKA_ADVERTISED_LISTENERS_2=${{ env.KAFKA_ADVERTISED_LISTENERS_2 }} >> .env
+          echo KAFKA_ADVERTISED_LISTENERS_3=${{ env.KAFKA_ADVERTISED_LISTENERS_3 }} >> .env
+          echo KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=${{ env.KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR }} >> .env
+          echo KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=${{ env.KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS }} >> .env
+          echo KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=${{ env.KAFKA_TRANSACTION_STATE_LOG_MIN_ISR }} >> .env
+          echo KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=${{ env.KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR }} >> .env
+          
+          echo HEALTHCHECK_INTERVAL=${{ env.HEALTHCHECK_INTERVAL }} >> .env
+          echo HEALTHCHECK_TIMEOUT=${{ env.HEALTHCHECK_TIMEOUT }} >> .env
+          echo HEALTHCHECK_RETRIES=${{ env.HEALTHCHECK_RETRIES }} >> .env
+          echo HEALTHCHECK_START_PERIOD=${{ env.HEALTHCHECK_START_PERIOD }} >> .env
 
       - name: Upload .env file as artifact
         uses: actions/upload-artifact@v4.3.4
