@@ -9,7 +9,7 @@ import (
 
 // Get retrieves a user from the system by ID.
 // It first attempts to fetch the user from cache; if unavailable, it fetches from database.
-func (s *userServ) Get(ctx context.Context, id int64) (*model.User, error) {
+func (s *userService) Get(ctx context.Context, id int64) (*model.User, error) {
 	user, err := s.redisRepository.Get(ctx, id)
 	if err == nil && user != nil {
 		return user, nil

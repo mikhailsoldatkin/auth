@@ -19,3 +19,15 @@ type UserService interface {
 type ConsumerService interface {
 	RunConsumer(ctx context.Context) error
 }
+
+// AuthService ....
+type AuthService interface {
+	Login(ctx context.Context, username, password string) (string, error)
+	GetRefreshToken(ctx context.Context, refreshToken string) (string, error)
+	GetAccessToken(ctx context.Context, accessToken string) (string, error)
+}
+
+// AccessService ....
+type AccessService interface {
+	Check(ctx context.Context, endpoint string) error
+}
