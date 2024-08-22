@@ -15,3 +15,12 @@
 
 # Test coverage files
 *coverage*
+
+# Private keys
+cert/*.key
+
+cert/*.csr
+# Certificate Signing Request files
+
+# CA serial number file
+cert/*.srl
