@@ -22,7 +22,9 @@ import (
 
 	"github.com/mikhailsoldatkin/auth/internal/config"
 	"github.com/mikhailsoldatkin/auth/internal/interceptor"
-	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
+	pbAccess "github.com/mikhailsoldatkin/auth/pkg/access_v1"
+	pbAuth "github.com/mikhailsoldatkin/auth/pkg/auth_v1"
+	pbUser "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 	"github.com/mikhailsoldatkin/platform_common/pkg/closer"
 
 	// Register statik to serve Swagger UI and static files
@@ -177,7 +179,10 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 	)
 
 	reflection.Register(a.grpcServer)
-	pb.RegisterUserV1Server(a.grpcServer, a.serviceProvider.UserImplementation(ctx))
+
+	pbUser.RegisterUserV1Server(a.grpcServer, a.serviceProvider.UserImplementation(ctx))
+	pbAuth.RegisterAuthV1Server(a.grpcServer, a.serviceProvider.AuthImplementation(ctx))
+	pbAccess.RegisterAccessV1Server(a.grpcServer, a.serviceProvider.AccessImplementation(ctx))
 
 	return nil
 }
@@ -190,7 +195,7 @@ func (a *App) initHTTPServer(ctx context.Context) error {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
 
-	err := pb.RegisterUserV1HandlerFromEndpoint(ctx, mux, a.serviceProvider.config.GRPC.Address, opts)
+	err := pbUser.RegisterUserV1HandlerFromEndpoint(ctx, mux, a.serviceProvider.config.GRPC.Address, opts)
 	if err != nil {
 		return err
 	}

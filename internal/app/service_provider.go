@@ -14,6 +14,8 @@ import (
 	"github.com/mikhailsoldatkin/platform_common/pkg/db/pg"
 	"github.com/mikhailsoldatkin/platform_common/pkg/db/transaction"
 
+	"github.com/mikhailsoldatkin/auth/internal/api/access"
+	"github.com/mikhailsoldatkin/auth/internal/api/auth"
 	"github.com/mikhailsoldatkin/auth/internal/api/user"
 	"github.com/mikhailsoldatkin/auth/internal/client/kafka"
 	kafkaConsumer "github.com/mikhailsoldatkin/auth/internal/client/kafka/consumer"
@@ -23,6 +25,8 @@ import (
 	pgRepository "github.com/mikhailsoldatkin/auth/internal/repository/user/pg"
 	redisRepository "github.com/mikhailsoldatkin/auth/internal/repository/user/redis"
 	"github.com/mikhailsoldatkin/auth/internal/service"
+	accessService "github.com/mikhailsoldatkin/auth/internal/service/access"
+	authService "github.com/mikhailsoldatkin/auth/internal/service/auth"
 	userSaverConsumer "github.com/mikhailsoldatkin/auth/internal/service/consumer/user_create"
 	userService "github.com/mikhailsoldatkin/auth/internal/service/user"
 )
@@ -48,8 +52,13 @@ type serviceProvider struct {
 	consumerGroup        sarama.ConsumerGroup
 	consumerGroupHandler *kafkaConsumer.GroupHandler
 
-	userService        service.UserService
-	userImplementation *user.Implementation
+	userService   service.UserService
+	authService   service.AuthService
+	accessService service.AccessService
+
+	userImplementation   *user.Implementation
+	authImplementation   *auth.Implementation
+	accessImplementation *access.Implementation
 }
 
 // newServiceProvider creates and returns a new instance of serviceProvider.
@@ -227,6 +236,24 @@ func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
 	return s.userService
 }
 
+// AuthService returns the ...
+func (s *serviceProvider) AuthService(ctx context.Context) service.AuthService {
+	if s.authService == nil {
+		s.authService = authService.NewAuthService()
+	}
+
+	return s.authService
+}
+
+// AccessService returns the ...
+func (s *serviceProvider) AccessService(ctx context.Context) service.AccessService {
+	if s.accessService == nil {
+		s.accessService = accessService.NewAccessService()
+	}
+
+	return s.accessService
+}
+
 // UserImplementation returns the user implementation used by the serviceProvider.
 func (s *serviceProvider) UserImplementation(ctx context.Context) *user.Implementation {
 	if s.userImplementation == nil {
@@ -234,4 +261,22 @@ func (s *serviceProvider) UserImplementation(ctx context.Context) *user.Implemen
 	}
 
 	return s.userImplementation
+}
+
+// AuthImplementation returns the auth implementation used by the serviceProvider.
+func (s *serviceProvider) AuthImplementation(ctx context.Context) *auth.Implementation {
+	if s.authImplementation == nil {
+		s.authImplementation = auth.NewImplementation(s.AuthService(ctx))
+	}
+
+	return s.authImplementation
+}
+
+// AccessImplementation returns the access implementation used by the serviceProvider.
+func (s *serviceProvider) AccessImplementation(ctx context.Context) *access.Implementation {
+	if s.accessImplementation == nil {
+		s.accessImplementation = access.NewImplementation(s.AccessService(ctx))
+	}
+
+	return s.accessImplementation
 }

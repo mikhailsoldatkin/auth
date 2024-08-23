@@ -1,8 +1,12 @@
 package auth
 
-import "context"
+import (
+	"context"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
 
 func (a authService) GetRefreshToken(ctx context.Context, refreshToken string) (string, error) {
-	//TODO implement me
-	panic("implement me")
+	return "", status.Errorf(codes.Unimplemented, "method not implemented")
 }
