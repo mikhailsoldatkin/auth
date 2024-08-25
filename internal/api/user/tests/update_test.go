@@ -40,14 +40,14 @@ func TestUpdate(t *testing.T) {
 		invalidEmail = "wrong email"
 
 		validReq = &pb.UpdateRequest{
-			Id:    id,
-			Name:  wrapperspb.String(name),
-			Email: wrapperspb.String(validEmail),
+			Id:       id,
+			Username: wrapperspb.String(name),
+			Email:    wrapperspb.String(validEmail),
 		}
 		invalidReq = &pb.UpdateRequest{
-			Id:    id,
-			Name:  wrapperspb.String(name),
-			Email: wrapperspb.String(invalidEmail),
+			Id:       id,
+			Username: wrapperspb.String(name),
+			Email:    wrapperspb.String(invalidEmail),
 		}
 		wantResp     = &emptypb.Empty{}
 		wantErr      = fmt.Errorf("service error")

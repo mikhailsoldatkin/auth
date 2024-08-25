@@ -34,9 +34,9 @@ func TestCreate(t *testing.T) {
 		role  = gofakeit.RandomString([]string{"USER", "ADMIN"})
 
 		req = &model.User{
-			Name:  name,
-			Email: email,
-			Role:  role,
+			Username: name,
+			Email:    email,
+			Role:     role,
 		}
 		wantErr = fmt.Errorf("repository error")
 	)

@@ -38,7 +38,7 @@ func TestGet(t *testing.T) {
 
 		wantUser = &model.User{
 			ID:        id,
-			Name:      name,
+			Username:  name,
 			Email:     email,
 			Role:      role,
 			CreatedAt: now,

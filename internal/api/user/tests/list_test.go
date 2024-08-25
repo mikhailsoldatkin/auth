@@ -43,7 +43,7 @@ func TestList(t *testing.T) {
 		wantUsers = []*model.User{
 			{
 				ID:        id1,
-				Name:      name1,
+				Username:  name1,
 				Email:     email1,
 				Role:      role1,
 				CreatedAt: now,
@@ -51,7 +51,7 @@ func TestList(t *testing.T) {
 			},
 			{
 				ID:        id2,
-				Name:      name2,
+				Username:  name2,
 				Email:     email2,
 				Role:      role2,
 				CreatedAt: now,
@@ -65,7 +65,7 @@ func TestList(t *testing.T) {
 			Users: []*pb.User{
 				{
 					Id:        id1,
-					Name:      name1,
+					Username:  name1,
 					Email:     email1,
 					Role:      pb.Role(pb.Role_value[role1]),
 					CreatedAt: timestamppb.New(now),
@@ -73,7 +73,7 @@ func TestList(t *testing.T) {
 				},
 				{
 					Id:        id2,
-					Name:      name2,
+					Username:  name2,
 					Email:     email2,
 					Role:      pb.Role(pb.Role_value[role2]),
 					CreatedAt: timestamppb.New(now),

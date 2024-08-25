@@ -31,8 +31,8 @@ func TestUpdate(t *testing.T) {
 		id   = gofakeit.Int64()
 		name = gofakeit.Name()
 		req  = &model.User{
-			ID:   id,
-			Name: name,
+			ID:       id,
+			Username: name,
 		}
 		wantErr = fmt.Errorf("repository error")
 	)
