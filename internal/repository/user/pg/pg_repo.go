@@ -19,7 +19,7 @@ import (
 const (
 	tableUsers      = "users"
 	columnID        = "id"
-	columnName      = "name"
+	columnUsername  = "username"
 	columnEmail     = "email"
 	columnRole      = "role"
 	columnCreatedAt = "created_at"
@@ -44,13 +44,13 @@ func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
 	builder := sq.Insert(tableUsers).
 		PlaceholderFormat(sq.Dollar).
 		Columns(
-			columnName,
+			columnUsername,
 			columnEmail,
 			columnRole,
 			columnCreatedAt,
 			columnUpdatedAt,
 		).
-		Values(user.Name, user.Email, user.Role, now, now).
+		Values(user.Username, user.Email, user.Role, now, now).
 		Suffix("RETURNING id")
 
 	query, args, err := builder.ToSql()
@@ -76,7 +76,7 @@ func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
 func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 	builder := sq.Select(
 		columnID,
-		columnName,
+		columnUsername,
 		columnEmail,
 		columnRole,
 		columnCreatedAt,

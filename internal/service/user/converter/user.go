@@ -11,7 +11,7 @@ import (
 func FromServiceToProtobuf(user *model.User) *pb.User {
 	return &pb.User{
 		Id:        user.ID,
-		Name:      user.Name,
+		Username:  user.Username,
 		Email:     user.Email,
 		Role:      pb.Role(pb.Role_value[user.Role]),
 		CreatedAt: timestamppb.New(user.CreatedAt),
@@ -31,18 +31,18 @@ func FromServiceToProtobufList(users []*model.User) []*pb.User {
 // FromProtobufToServiceCreate converter from protobuf Create request to service User model.
 func FromProtobufToServiceCreate(req *pb.CreateRequest) *model.User {
 	return &model.User{
-		Name:  req.GetName(),
-		Email: req.GetEmail(),
-		Role:  req.GetRole().String(),
+		Username: req.GetUsername(),
+		Email:    req.GetEmail(),
+		Role:     req.GetRole().String(),
 	}
 }
 
 // FromProtobufToServiceUpdate converter from protobuf Update request to service User model.
 func FromProtobufToServiceUpdate(req *pb.UpdateRequest) *model.User {
 	return &model.User{
-		ID:    req.Id,
-		Name:  req.GetName().GetValue(),
-		Email: req.GetEmail().GetValue(),
-		Role:  req.GetRole().String(),
+		ID:       req.Id,
+		Username: req.GetUsername().GetValue(),
+		Email:    req.GetEmail().GetValue(),
+		Role:     req.GetRole().String(),
 	}
 }

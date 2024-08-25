@@ -58,9 +58,9 @@ func (m *User) validate(all bool) error {
 
 	// no validation rules for Id
 
-	if l := utf8.RuneCountInString(m.GetName()); l < 1 || l > 25 {
+	if l := utf8.RuneCountInString(m.GetUsername()); l < 1 || l > 25 {
 		err := UserValidationError{
-			field:  "Name",
+			field:  "Username",
 			reason: "value length must be between 1 and 25 runes, inclusive",
 		}
 		if !all {
@@ -299,9 +299,9 @@ func (m *CreateRequest) validate(all bool) error {
 
 	var errors []error
 
-	if l := utf8.RuneCountInString(m.GetName()); l < 1 || l > 25 {
+	if l := utf8.RuneCountInString(m.GetUsername()); l < 1 || l > 25 {
 		err := CreateRequestValidationError{
-			field:  "Name",
+			field:  "Username",
 			reason: "value length must be between 1 and 25 runes, inclusive",
 		}
 		if !all {
@@ -856,11 +856,11 @@ func (m *UpdateRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if wrapper := m.GetName(); wrapper != nil {
+	if wrapper := m.GetUsername(); wrapper != nil {
 
 		if l := utf8.RuneCountInString(wrapper.GetValue()); l < 1 || l > 25 {
 			err := UpdateRequestValidationError{
-				field:  "Name",
+				field:  "Username",
 				reason: "value length must be between 1 and 25 runes, inclusive",
 			}
 			if !all {

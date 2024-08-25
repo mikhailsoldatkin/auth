@@ -197,7 +197,7 @@
     "UserV1UpdateBody": {
       "type": "object",
       "properties": {
-        "name": {
+        "username": {
           "type": "string"
         },
         "email": {
@@ -239,7 +239,7 @@
     "user_v1CreateRequest": {
       "type": "object",
       "properties": {
-        "name": {
+        "username": {
           "type": "string"
         },
         "email": {
@@ -301,7 +301,7 @@
           "type": "string",
           "format": "int64"
         },
-        "name": {
+        "username": {
           "type": "string"
         },
         "email": {

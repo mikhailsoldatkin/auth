@@ -118,4 +118,4 @@ gen-cert:
     openssl genrsa -out $(CERT_FOLDER)/service.key 4096 && \
     openssl req -new -key $(CERT_FOLDER)/service.key -out $(CERT_FOLDER)/service.csr -config $(CERT_FOLDER)/certificate.conf && \
     openssl x509 -req -in $(CERT_FOLDER)/service.csr -CA $(CERT_FOLDER)/ca.cert -CAkey $(CERT_FOLDER)/ca.key -CAcreateserial \
-        -out $(CERT_FOLDER)/service.pem -days 365 -sha256 -extfile $(CERT_FOLDER)/certificate.conf -extensions req_ext && \
+        -out $(CERT_FOLDER)/service.pem -days 365 -sha256 -extfile $(CERT_FOLDER)/certificate.conf -extensions req_ext

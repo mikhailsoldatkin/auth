@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	columnName      = "name"
+	columnUsername  = "username"
 	columnEmail     = "email"
 	columnRole      = "role"
 	columnUpdatedAt = "updated_at"
@@ -19,7 +19,7 @@ const (
 func FromRepoToService(user *modelRepo.User) *model.User {
 	return &model.User{
 		ID:        user.ID,
-		Name:      user.Name,
+		Username:  user.Username,
 		Email:     user.Email,
 		Role:      user.Role,
 		CreatedAt: user.CreatedAt,
@@ -39,8 +39,8 @@ func FromRepoToServiceList(users []*modelRepo.User) []*model.User {
 // FromServiceToRepoUpdate converts a service User model to a Postgres update map.
 func FromServiceToRepoUpdate(updates *model.User) map[string]any {
 	updateFields := make(map[string]any)
-	if updates.Name != "" {
-		updateFields[columnName] = updates.Name
+	if updates.Username != "" {
+		updateFields[columnUsername] = updates.Username
 	}
 	if updates.Email != "" {
 		updateFields[columnEmail] = updates.Email

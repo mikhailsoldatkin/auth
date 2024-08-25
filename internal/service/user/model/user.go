@@ -7,7 +7,7 @@ import (
 // User represents a business logic user model.
 type User struct {
 	ID        int64     `json:"id"`
-	Name      string    `json:"name"`
+	Username  string    `json:"username"`
 	Email     string    `json:"email"`
 	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
