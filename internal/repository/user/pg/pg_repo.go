@@ -8,6 +8,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4"
 	"github.com/mikhailsoldatkin/platform_common/pkg/db"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/mikhailsoldatkin/auth/internal/customerrors"
 	"github.com/mikhailsoldatkin/auth/internal/repository"
@@ -22,6 +23,7 @@ const (
 	columnUsername  = "username"
 	columnEmail     = "email"
 	columnRole      = "role"
+	columnPassword  = "password"
 	columnCreatedAt = "created_at"
 	columnUpdatedAt = "updated_at"
 	userEntity      = "user"
@@ -41,16 +43,22 @@ func NewRepository(db db.Client) repository.UserRepository {
 // Create inserts a new user into the database.
 func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
 	now := time.Now()
+	password, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return 0, err
+	}
+
 	builder := sq.Insert(tableUsers).
 		PlaceholderFormat(sq.Dollar).
 		Columns(
 			columnUsername,
 			columnEmail,
 			columnRole,
+			columnPassword,
 			columnCreatedAt,
 			columnUpdatedAt,
 		).
-		Values(user.Username, user.Email, user.Role, now, now).
+		Values(user.Username, user.Email, user.Role, password, now, now).
 		Suffix("RETURNING id")
 
 	query, args, err := builder.ToSql()
@@ -79,6 +87,7 @@ func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 		columnUsername,
 		columnEmail,
 		columnRole,
+		columnPassword,
 		columnCreatedAt,
 		columnUpdatedAt,
 	).

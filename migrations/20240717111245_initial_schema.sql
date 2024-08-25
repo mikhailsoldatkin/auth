@@ -5,6 +5,7 @@ CREATE TABLE users
     username   TEXT                     NOT NULL,
     email      TEXT UNIQUE              NOT NULL,
     role       TEXT                     NOT NULL DEFAULT 'UNKNOWN',
+    password   TEXT                     NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );

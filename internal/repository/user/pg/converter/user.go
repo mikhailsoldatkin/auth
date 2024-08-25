@@ -22,6 +22,7 @@ func FromRepoToService(user *modelRepo.User) *model.User {
 		Username:  user.Username,
 		Email:     user.Email,
 		Role:      user.Role,
+		Password:  user.Password,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	}

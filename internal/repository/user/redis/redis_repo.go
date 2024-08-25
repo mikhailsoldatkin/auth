@@ -7,6 +7,7 @@ import (
 
 	redigo "github.com/gomodule/redigo/redis"
 	"github.com/mikhailsoldatkin/platform_common/pkg/cache"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/mikhailsoldatkin/auth/internal/customerrors"
 	"github.com/mikhailsoldatkin/auth/internal/repository"
@@ -31,7 +32,13 @@ func NewRepository(cl cache.RedisClient) repository.UserRepository {
 // Create stores a new user in Redis and returns user's ID.
 func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
 	key := strconv.FormatInt(user.ID, 10)
-	err := r.cl.HashSet(ctx, key, converter.FromServiceToRepo(user))
+	password, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return 0, err
+	}
+	user.Password = string(password)
+
+	err = r.cl.HashSet(ctx, key, converter.FromServiceToRepo(user))
 	if err != nil {
 		return 0, err
 	}

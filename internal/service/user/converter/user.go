@@ -34,6 +34,7 @@ func FromProtobufToServiceCreate(req *pb.CreateRequest) *model.User {
 		Username: req.GetUsername(),
 		Email:    req.GetEmail(),
 		Role:     req.GetRole().String(),
+		Password: req.GetPassword(),
 	}
 }
 
