@@ -3,6 +3,7 @@ package pg
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -30,6 +31,8 @@ const (
 
 	defaultPageSize = 10
 )
+
+var _ repository.UserRepository = (*repo)(nil)
 
 type repo struct {
 	db db.Client
@@ -115,6 +118,65 @@ func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 	}
 
 	return converter.FromRepoToService(&user), nil
+}
+
+// GetByUsername retrieves a user by username from the database.
+func (r *repo) GetByUsername(ctx context.Context, username string) (*model.User, error) {
+	builder := sq.Select(
+		columnUsername,
+		columnRole,
+		columnPassword,
+	).
+		From(tableUsers).
+		Where(sq.Eq{columnUsername: username}).
+		PlaceholderFormat(sq.Dollar)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	q := db.Query{
+		Name:     "user_repository.GetByUsername",
+		QueryRaw: query,
+	}
+
+	var user repoModel.User
+	err = r.db.DB().ScanOneContext(ctx, &user, q, args...)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("user with username %s not found", username)
+		}
+		return nil, err
+	}
+
+	return converter.FromRepoToService(&user), nil
+}
+
+// GetEndpointRoles retrieves roles associated with a specific endpoint.
+func (r *repo) GetEndpointRoles(ctx context.Context, endpoint string) ([]string, error) {
+	builder := sq.Select("role").
+		From("permissions").
+		Where(sq.Eq{"endpoint": endpoint}).
+		PlaceholderFormat(sq.Dollar)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	q := db.Query{
+		Name:     "user_repository.GetEndpointRoles",
+		QueryRaw: query,
+	}
+
+	var roles []string
+	err = r.db.DB().ScanAllContext(ctx, &roles, q, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return roles, nil
 }
 
 // Delete removes a user from the database by ID.

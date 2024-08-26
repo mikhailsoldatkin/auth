@@ -9,14 +9,12 @@ import (
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 )
 
-// GenerateToken ...
+// GenerateToken generates a signed JWT token for the provided user.
 func GenerateToken(user model.User, secretKey []byte, duration time.Duration) (string, error) {
 	claims := model.UserClaims{
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(duration).Unix(),
-		},
-		Username: user.Username,
-		Role:     user.Role,
+		StandardClaims: jwt.StandardClaims{ExpiresAt: time.Now().Add(duration).Unix()},
+		Username:       user.Username,
+		Role:           user.Role,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -24,7 +22,7 @@ func GenerateToken(user model.User, secretKey []byte, duration time.Duration) (s
 	return token.SignedString(secretKey)
 }
 
-// VerifyToken ...
+// VerifyToken verifies a JWT token string and returns the user claims if the token is valid.
 func VerifyToken(tokenStr string, secretKey []byte) (*model.UserClaims, error) {
 	keyFunc := func(token *jwt.Token) (interface{}, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)

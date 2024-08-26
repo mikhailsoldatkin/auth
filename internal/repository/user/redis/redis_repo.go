@@ -16,6 +16,8 @@ import (
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 )
 
+var _ repository.UserRepository = (*repo)(nil)
+
 const (
 	userEntity = "user"
 )
@@ -93,5 +95,13 @@ func (r *repo) Update(ctx context.Context, updates *model.User) error {
 
 // List retrieves all users from Redis based on the provided limit and offset.
 func (r *repo) List(_ context.Context, _, _ int64) ([]*model.User, error) {
-	return nil, errors.New("list method not implemented")
+	return nil, errors.New("method not implemented")
+}
+
+func (r *repo) GetByUsername(ctx context.Context, username string) (*model.User, error) {
+	return nil, errors.New("method not implemented")
+}
+
+func (r *repo) GetEndpointRoles(ctx context.Context, endpoint string) ([]string, error) {
+	return nil, errors.New("method not implemented")
 }

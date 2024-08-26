@@ -61,6 +61,13 @@ type KafkaConsumer struct {
 	Config  *sarama.Config
 }
 
+// Auth represents configuration for authentication.
+type Auth struct {
+	TokenSecretKey            string `env:"TOKEN_SECRET_KEY" env-required:"true"`
+	RefreshTokenExpirationMin int    `env:"REFRESH_TOKEN_EXPIRATION_MIN" env-required:"true"`
+	AccessTokenExpirationMin  int    `env:"ACCESS_TOKEN_EXPIRATION_MIN" env-required:"true"`
+}
+
 // Config represents the overall application configuration.
 type Config struct {
 	DB            DB
@@ -69,6 +76,7 @@ type Config struct {
 	HTTP          HTTP
 	Swagger       Swagger
 	KafkaConsumer KafkaConsumer
+	Auth          Auth
 }
 
 // Load reads configuration from .env file.

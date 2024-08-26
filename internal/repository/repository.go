@@ -10,6 +10,8 @@ import (
 type UserRepository interface {
 	Create(ctx context.Context, user *model.User) (int64, error)
 	Get(ctx context.Context, id int64) (*model.User, error)
+	GetByUsername(ctx context.Context, username string) (*model.User, error)
+	GetEndpointRoles(ctx context.Context, endpoint string) ([]string, error)
 	Delete(ctx context.Context, id int64) error
 	Update(ctx context.Context, updates *model.User) error
 	List(ctx context.Context, limit, offset int64) ([]*model.User, error)

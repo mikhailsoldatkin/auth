@@ -236,19 +236,24 @@ func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
 	return s.userService
 }
 
-// AuthService returns the ...
+// AuthService returns the auth service.
 func (s *serviceProvider) AuthService(ctx context.Context) service.AuthService {
 	if s.authService == nil {
-		s.authService = authService.NewAuthService()
+		s.authService = authService.NewAuthService(
+			s.PGRepository(ctx),
+			s.config.Auth,
+		)
 	}
 
 	return s.authService
 }
 
-// AccessService returns the ...
+// AccessService returns the access service.
 func (s *serviceProvider) AccessService(ctx context.Context) service.AccessService {
 	if s.accessService == nil {
-		s.accessService = accessService.NewAccessService()
+		s.accessService = accessService.NewAccessService(
+			s.PGRepository(ctx),
+			s.config.Auth)
 	}
 
 	return s.accessService

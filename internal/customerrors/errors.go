@@ -20,3 +20,29 @@ func NewErrNotFound(entity string, id int64) error {
 		ID:     id,
 	}
 }
+
+// ErrInvalidPassword represents an error when the provided password is incorrect.
+type ErrInvalidPassword struct{}
+
+// Error implements the error interface for ErrInvalidPassword.
+func (e *ErrInvalidPassword) Error() string {
+	return fmt.Sprintf("invalid password")
+}
+
+// NewErrInvalidPassword creates a new ErrInvalidPassword.
+func NewErrInvalidPassword() error {
+	return &ErrInvalidPassword{}
+}
+
+// ErrInvalidToken represents an error when the provided token is invalid.
+type ErrInvalidToken struct{}
+
+// Error implements the error interface for ErrInvalidPassword.
+func (e *ErrInvalidToken) Error() string {
+	return fmt.Sprintf("invalid token")
+}
+
+// NewErrInvalidToken creates a new NewErrInvalidToken.
+func NewErrInvalidToken() error {
+	return &ErrInvalidToken{}
+}

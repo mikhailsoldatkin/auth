@@ -20,14 +20,14 @@ type ConsumerService interface {
 	RunConsumer(ctx context.Context) error
 }
 
-// AuthService ....
+// AuthService provides methods for user authentication and token management.
 type AuthService interface {
 	Login(ctx context.Context, username, password string) (string, error)
-	GetRefreshToken(ctx context.Context, refreshToken string) (string, error)
-	GetAccessToken(ctx context.Context, accessToken string) (string, error)
+	GetRefreshToken(ctx context.Context, oldRefreshToken string) (string, error)
+	GetAccessToken(ctx context.Context, refreshToken string) (string, error)
 }
 
-// AccessService ....
+// AccessService provides methods for checking access permissions for various endpoints.
 type AccessService interface {
 	Check(ctx context.Context, endpoint string) error
 }
