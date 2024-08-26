@@ -3,6 +3,7 @@ package access
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/mikhailsoldatkin/auth/internal/utils"
@@ -14,6 +15,8 @@ const prefixAuth = "Bearer "
 
 // Check verifies whether the user has the necessary permissions to access a specific endpoint.
 func (a accessService) Check(ctx context.Context, endpoint string) error {
+	log.Println("Check called....")
+
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return fmt.Errorf("metadata is not provided")
