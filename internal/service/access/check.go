@@ -3,8 +3,10 @@ package access
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
+	"github.com/mikhailsoldatkin/auth/internal/customerrors"
 	"github.com/mikhailsoldatkin/auth/internal/utils"
 	"google.golang.org/grpc/metadata"
 )
@@ -32,7 +34,7 @@ func (a accessService) Check(ctx context.Context, endpoint string) error {
 
 	claims, err := utils.VerifyToken(accessToken, []byte(a.config.TokenSecretKey))
 	if err != nil {
-		return fmt.Errorf("access token is invalid")
+		return customerrors.NewErrInvalidToken()
 	}
 
 	roles, err := a.userRepo.GetEndpointRoles(ctx, endpoint)
@@ -42,9 +44,10 @@ func (a accessService) Check(ctx context.Context, endpoint string) error {
 
 	for _, role := range roles {
 		if role == claims.Role {
+			log.Printf("access to endpoint %s granted", endpoint)
 			return nil
 		}
 	}
 
-	return fmt.Errorf("access denied")
+	return customerrors.NewErrForbidden()
 }

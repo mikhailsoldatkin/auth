@@ -7,14 +7,12 @@ CREATE TABLE permissions
     UNIQUE (endpoint, role)
 );
 
--- Insert predefined permissions
+-- predefined permissions
 INSERT INTO permissions (endpoint, role)
-VALUES ('/user_v1.UserV1/Get', 'ADMIN'),
-       ('/user_v1.UserV1/Get', 'USER'),
-       ('/user_v1.UserV1/Create', 'ADMIN'),
-       ('/user_v1.UserV1/Delete', 'ADMIN'),
-       ('/user_v1.UserV1/List', 'ADMIN'),
-       ('/user_v1.UserV1/List', 'USER');
+VALUES ('/chat_v1.ChatV1/Create', 'ADMIN'),
+       ('/chat_v1.ChatV1/Delete', 'ADMIN'),
+       ('/chat_v1.ChatV1/SendMessage', 'ADMIN'),
+       ('/chat_v1.ChatV1/SendMessage', 'USER');
 
 -- +goose Down
 DROP TABLE IF EXISTS permissions;

@@ -46,3 +46,16 @@ func (e *ErrInvalidToken) Error() string {
 func NewErrInvalidToken() error {
 	return &ErrInvalidToken{}
 }
+
+// ErrForbidden represents an error for a forbidden action.
+type ErrForbidden struct{}
+
+// Error implements the error interface for ErrForbidden.
+func (e *ErrForbidden) Error() string {
+	return fmt.Sprintf("access denied")
+}
+
+// NewErrForbidden creates a new ErrForbidden error.
+func NewErrForbidden() error {
+	return &ErrForbidden{}
+}
