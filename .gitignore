@@ -16,6 +16,7 @@
 # Test coverage files
 *coverage*
 
+# during devepompent
 ## Private keys
 #cert/*.key
 #
