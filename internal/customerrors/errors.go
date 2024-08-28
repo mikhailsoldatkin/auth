@@ -26,7 +26,7 @@ type ErrInvalidPassword struct{}
 
 // Error implements the error interface for ErrInvalidPassword.
 func (e *ErrInvalidPassword) Error() string {
-	return fmt.Sprintf("invalid password")
+	return "invalid password"
 }
 
 // NewErrInvalidPassword creates a new ErrInvalidPassword.
@@ -39,7 +39,7 @@ type ErrInvalidToken struct{}
 
 // Error implements the error interface for ErrInvalidPassword.
 func (e *ErrInvalidToken) Error() string {
-	return fmt.Sprintf("invalid token")
+	return "invalid token"
 }
 
 // NewErrInvalidToken creates a new NewErrInvalidToken.
@@ -52,7 +52,7 @@ type ErrForbidden struct{}
 
 // Error implements the error interface for ErrForbidden.
 func (e *ErrForbidden) Error() string {
-	return fmt.Sprintf("access denied")
+	return "access denied"
 }
 
 // NewErrForbidden creates a new ErrForbidden error.

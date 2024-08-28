@@ -98,10 +98,10 @@ func (r *repo) List(_ context.Context, _, _ int64) ([]*model.User, error) {
 	return nil, errors.New("method not implemented")
 }
 
-func (r *repo) GetByUsername(ctx context.Context, username string) (*model.User, error) {
+func (r *repo) GetByUsername(_ context.Context, _ string) (*model.User, error) {
 	return nil, errors.New("method not implemented")
 }
 
-func (r *repo) GetEndpointRoles(ctx context.Context, endpoint string) ([]string, error) {
+func (r *repo) GetEndpointRoles(_ context.Context, _ string) ([]string, error) {
 	return nil, errors.New("method not implemented")
 }

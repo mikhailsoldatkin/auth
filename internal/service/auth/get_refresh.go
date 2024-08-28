@@ -10,7 +10,7 @@ import (
 )
 
 // GetRefreshToken returns refresh token.
-func (a authService) GetRefreshToken(ctx context.Context, oldRefreshToken string) (string, error) {
+func (a authService) GetRefreshToken(_ context.Context, oldRefreshToken string) (string, error) {
 	claims, err := utils.VerifyToken(oldRefreshToken, []byte(a.config.TokenSecretKey))
 	if err != nil {
 		return "", customerrors.NewErrInvalidToken()

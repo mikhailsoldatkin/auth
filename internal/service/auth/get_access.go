@@ -10,7 +10,7 @@ import (
 )
 
 // GetAccessToken returns a new access token.
-func (a authService) GetAccessToken(ctx context.Context, refreshToken string) (string, error) {
+func (a authService) GetAccessToken(_ context.Context, refreshToken string) (string, error) {
 	claims, err := utils.VerifyToken(refreshToken, []byte(a.config.TokenSecretKey))
 	if err != nil {
 		return "", customerrors.NewErrInvalidToken()
