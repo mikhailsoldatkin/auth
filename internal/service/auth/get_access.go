@@ -9,7 +9,7 @@ import (
 	"github.com/mikhailsoldatkin/auth/internal/utils"
 )
 
-// GetAccessToken returns a new access token.
+// GetAccessToken returns a new access token based on valid refresh token.
 func (a authService) GetAccessToken(_ context.Context, refreshToken string) (string, error) {
 	claims, err := utils.VerifyToken(refreshToken, []byte(a.config.TokenSecretKey))
 	if err != nil {

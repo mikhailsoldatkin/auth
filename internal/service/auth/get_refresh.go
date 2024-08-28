@@ -9,7 +9,7 @@ import (
 	"github.com/mikhailsoldatkin/auth/internal/utils"
 )
 
-// GetRefreshToken returns refresh token.
+// GetRefreshToken returns new refresh token based on old.
 func (a authService) GetRefreshToken(_ context.Context, oldRefreshToken string) (string, error) {
 	claims, err := utils.VerifyToken(oldRefreshToken, []byte(a.config.TokenSecretKey))
 	if err != nil {

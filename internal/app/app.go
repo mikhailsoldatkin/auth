@@ -16,6 +16,7 @@ import (
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
@@ -125,6 +126,7 @@ func gracefulShutdown(ctx context.Context, cancel context.CancelFunc, wg *sync.W
 func waitSignal() chan os.Signal {
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, syscall.SIGINT, syscall.SIGTERM)
+
 	return sigterm
 }
 
@@ -161,18 +163,19 @@ func (a *App) initConfig(_ context.Context) error {
 // initServiceProvider initializes the service provider used by the application.
 func (a *App) initServiceProvider(_ context.Context) error {
 	a.serviceProvider = newServiceProvider()
+
 	return nil
 }
 
 // initGRPCServer initializes the GRPC server.
 func (a *App) initGRPCServer(ctx context.Context) error {
-	//creds, err := credentials.NewServerTLSFromFile("cert/service.pem", "cert/service.key")
-	//if err != nil {
-	//	log.Fatalf("failed to load TLS keys: %v", err)
-	//}
+	creds, err := credentials.NewServerTLSFromFile("cert/service.pem", "cert/service.key")
+	if err != nil {
+		log.Fatalf("failed to load TLS credentials from files: %v", err)
+	}
 
 	a.grpcServer = grpc.NewServer(
-		grpc.Creds(insecure.NewCredentials()),
+		grpc.Creds(creds),
 		grpc.UnaryInterceptor(interceptor.ValidateInterceptor),
 	)
 
