@@ -19,15 +19,17 @@ import (
 )
 
 const (
-	tableUsers      = "users"
-	columnID        = "id"
-	columnUsername  = "username"
-	columnEmail     = "email"
-	columnRole      = "role"
-	columnPassword  = "password"
-	columnCreatedAt = "created_at"
-	columnUpdatedAt = "updated_at"
-	userEntity      = "user"
+	tableUsers       = "users"
+	tablePermissions = "permissions"
+	columnID         = "id"
+	columnUsername   = "username"
+	columnEmail      = "email"
+	columnRole       = "role"
+	columnPassword   = "password"
+	columnCreatedAt  = "created_at"
+	columnUpdatedAt  = "updated_at"
+	userEntity       = "user"
+	columnEndpoint   = "endpoint"
 
 	defaultPageSize = 10
 )
@@ -153,11 +155,11 @@ func (r *repo) GetByUsername(ctx context.Context, username string) (*model.User,
 	return converter.FromRepoToService(&user), nil
 }
 
-// GetEndpointRoles retrieves roles associated with a specific endpoint.
+// GetEndpointRoles retrieves roles associated with a specific endpoint from the database.
 func (r *repo) GetEndpointRoles(ctx context.Context, endpoint string) ([]string, error) {
-	builder := sq.Select("role").
-		From("permissions").
-		Where(sq.Eq{"endpoint": endpoint}).
+	builder := sq.Select(columnRole).
+		From(tablePermissions).
+		Where(sq.Eq{columnEndpoint: endpoint}).
 		PlaceholderFormat(sq.Dollar)
 
 	query, args, err := builder.ToSql()

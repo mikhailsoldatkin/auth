@@ -7,7 +7,7 @@ import (
 	pb "github.com/mikhailsoldatkin/auth/pkg/auth_v1"
 )
 
-// GetRefreshToken returns refresh token.
+// GetRefreshToken returns new refresh token based on old refresh token.
 func (i *Implementation) GetRefreshToken(ctx context.Context, req *pb.GetRefreshTokenRequest) (*pb.GetRefreshTokenResponse, error) {
 	refreshToken, err := i.authService.GetRefreshToken(ctx, req.GetRefreshToken())
 	if err != nil {

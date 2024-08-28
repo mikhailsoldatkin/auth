@@ -10,7 +10,7 @@ import (
 
 // Check verifies access to the specified endpoint.
 func (i *Implementation) Check(ctx context.Context, req *pb.CheckRequest) (*emptypb.Empty, error) {
-	err := i.accessService.Check(ctx, req.GetEndpointAddress())
+	err := i.accessService.Check(ctx, req.GetEndpoint())
 	if err != nil {
 		return nil, customerrors.ConvertError(err)
 	}

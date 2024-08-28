@@ -5,7 +5,7 @@ import (
 	pb "github.com/mikhailsoldatkin/auth/pkg/access_v1"
 )
 
-// Implementation ...
+// Implementation provides methods for handling access related gRPC requests.
 type Implementation struct {
 	pb.UnimplementedAccessV1Server
 	accessService service.AccessService

@@ -13,7 +13,7 @@ type accessService struct {
 	config   config.Auth
 }
 
-// NewAccessService creates a new instance of the auth service.
+// NewAccessService creates a new instance of the access service.
 func NewAccessService(
 	userRepo repository.UserRepository,
 	config config.Auth,

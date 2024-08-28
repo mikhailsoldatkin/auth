@@ -31,8 +31,6 @@ import (
 	userService "github.com/mikhailsoldatkin/auth/internal/service/user"
 )
 
-// serviceProvider provides access to various services and dependencies required by the application.
-// It manages database connections, Redis clients, Kafka consumers, and service instances.
 type serviceProvider struct {
 	config *config.Config
 
@@ -61,12 +59,10 @@ type serviceProvider struct {
 	accessImplementation *access.Implementation
 }
 
-// newServiceProvider creates and returns a new instance of serviceProvider.
 func newServiceProvider() *serviceProvider {
 	return &serviceProvider{}
 }
 
-// Config returns the configuration used by the serviceProvider.
 func (s *serviceProvider) Config() *config.Config {
 	if s.config == nil {
 		cfg, err := config.Load()
@@ -79,7 +75,6 @@ func (s *serviceProvider) Config() *config.Config {
 	return s.config
 }
 
-// DBClient returns the database client used by the serviceProvider, performs a health check.
 func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 	if s.dbClient == nil {
 		cl, err := pg.New(ctx, s.Config().DB.PostgresDSN)
@@ -99,7 +94,6 @@ func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 	return s.dbClient
 }
 
-// TxManager returns the transaction manager used by the serviceProvider.
 func (s *serviceProvider) TxManager(ctx context.Context) db.TxManager {
 	if s.txManager == nil {
 		s.txManager = transaction.NewTransactionManager(s.DBClient(ctx).DB())
@@ -108,7 +102,6 @@ func (s *serviceProvider) TxManager(ctx context.Context) db.TxManager {
 	return s.txManager
 }
 
-// PGRepository returns the PostgreSQL repository used by the serviceProvider.
 func (s *serviceProvider) PGRepository(ctx context.Context) repository.UserRepository {
 	if s.pgRepository == nil {
 		s.pgRepository = pgRepository.NewRepository(s.DBClient(ctx))
@@ -117,7 +110,6 @@ func (s *serviceProvider) PGRepository(ctx context.Context) repository.UserRepos
 	return s.pgRepository
 }
 
-// RedisPool returns the Redis connection pool used by the serviceProvider.
 func (s *serviceProvider) RedisPool() *redigo.Pool {
 	if s.redisPool == nil {
 		s.redisPool = &redigo.Pool{
@@ -134,7 +126,6 @@ func (s *serviceProvider) RedisPool() *redigo.Pool {
 	return s.redisPool
 }
 
-// RedisClient returns the Redis client used by the serviceProvider, performs a health check.
 func (s *serviceProvider) RedisClient(ctx context.Context) cache.RedisClient {
 	if s.redisClient == nil {
 		cl := redis.NewClient(s.RedisPool(), redis.Config(s.config.Redis))
@@ -149,7 +140,6 @@ func (s *serviceProvider) RedisClient(ctx context.Context) cache.RedisClient {
 	return s.redisClient
 }
 
-// RedisRepository returns the Redis repository used by the serviceProvider.
 func (s *serviceProvider) RedisRepository(ctx context.Context) repository.UserRepository {
 	if s.redisRepository == nil {
 		s.redisRepository = redisRepository.NewRepository(s.RedisClient(ctx))
@@ -158,7 +148,6 @@ func (s *serviceProvider) RedisRepository(ctx context.Context) repository.UserRe
 	return s.redisRepository
 }
 
-// LogRepository returns the log repository used by the serviceProvider.
 func (s *serviceProvider) LogRepository(ctx context.Context) repository.LogRepository {
 	if s.logRepository == nil {
 		s.logRepository = logRepository.NewRepository(s.DBClient(ctx))
@@ -167,7 +156,6 @@ func (s *serviceProvider) LogRepository(ctx context.Context) repository.LogRepos
 	return s.logRepository
 }
 
-// UserSaverConsumer returns the user saver consumer service used by the serviceProvider.
 func (s *serviceProvider) UserSaverConsumer(ctx context.Context) service.ConsumerService {
 	if s.userSaverConsumer == nil {
 		s.userSaverConsumer = userSaverConsumer.NewConsumerService(
@@ -181,7 +169,6 @@ func (s *serviceProvider) UserSaverConsumer(ctx context.Context) service.Consume
 	return s.userSaverConsumer
 }
 
-// Consumer returns the Kafka consumer used by the serviceProvider.
 func (s *serviceProvider) Consumer() kafka.Consumer {
 	if s.consumer == nil {
 		s.consumer = kafkaConsumer.NewConsumer(
@@ -194,7 +181,6 @@ func (s *serviceProvider) Consumer() kafka.Consumer {
 	return s.consumer
 }
 
-// ConsumerGroup returns the Kafka consumer group used by the serviceProvider.
 func (s *serviceProvider) ConsumerGroup() sarama.ConsumerGroup {
 	if s.consumerGroup == nil {
 		consumerGroup, err := sarama.NewConsumerGroup(
@@ -213,7 +199,6 @@ func (s *serviceProvider) ConsumerGroup() sarama.ConsumerGroup {
 	return s.consumerGroup
 }
 
-// ConsumerGroupHandler returns the Kafka consumer group handler used by the serviceProvider.
 func (s *serviceProvider) ConsumerGroupHandler() *kafkaConsumer.GroupHandler {
 	if s.consumerGroupHandler == nil {
 		s.consumerGroupHandler = kafkaConsumer.NewGroupHandler()
@@ -222,7 +207,6 @@ func (s *serviceProvider) ConsumerGroupHandler() *kafkaConsumer.GroupHandler {
 	return s.consumerGroupHandler
 }
 
-// UserService returns the user service used by the serviceProvider.
 func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
 	if s.userService == nil {
 		s.userService = userService.NewUserService(
@@ -236,7 +220,6 @@ func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
 	return s.userService
 }
 
-// AuthService returns the auth service.
 func (s *serviceProvider) AuthService(ctx context.Context) service.AuthService {
 	if s.authService == nil {
 		s.authService = authService.NewAuthService(
@@ -248,7 +231,6 @@ func (s *serviceProvider) AuthService(ctx context.Context) service.AuthService {
 	return s.authService
 }
 
-// AccessService returns the access service.
 func (s *serviceProvider) AccessService(ctx context.Context) service.AccessService {
 	if s.accessService == nil {
 		s.accessService = accessService.NewAccessService(
@@ -259,7 +241,6 @@ func (s *serviceProvider) AccessService(ctx context.Context) service.AccessServi
 	return s.accessService
 }
 
-// UserImplementation returns the user implementation used by the serviceProvider.
 func (s *serviceProvider) UserImplementation(ctx context.Context) *user.Implementation {
 	if s.userImplementation == nil {
 		s.userImplementation = user.NewImplementation(s.UserService(ctx))
@@ -268,7 +249,6 @@ func (s *serviceProvider) UserImplementation(ctx context.Context) *user.Implemen
 	return s.userImplementation
 }
 
-// AuthImplementation returns the auth implementation used by the serviceProvider.
 func (s *serviceProvider) AuthImplementation(ctx context.Context) *auth.Implementation {
 	if s.authImplementation == nil {
 		s.authImplementation = auth.NewImplementation(s.AuthService(ctx))
@@ -277,7 +257,6 @@ func (s *serviceProvider) AuthImplementation(ctx context.Context) *auth.Implemen
 	return s.authImplementation
 }
 
-// AccessImplementation returns the access implementation used by the serviceProvider.
 func (s *serviceProvider) AccessImplementation(ctx context.Context) *access.Implementation {
 	if s.accessImplementation == nil {
 		s.accessImplementation = access.NewImplementation(s.AccessService(ctx))
