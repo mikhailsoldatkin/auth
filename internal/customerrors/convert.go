@@ -25,7 +25,7 @@ func ConvertError(err error) error {
 	case errors.As(err, &errInvalidPassword):
 		return status.Errorf(codes.Unauthenticated, errInvalidPassword.Error())
 	case errors.As(err, &errInvalidToken):
-		return status.Errorf(codes.Aborted, errInvalidToken.Error())
+		return status.Errorf(codes.Unauthenticated, errInvalidToken.Error())
 	case errors.As(err, &errForbidden):
 		return status.Errorf(codes.PermissionDenied, errForbidden.Error())
 	default:
