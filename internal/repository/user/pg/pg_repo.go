@@ -253,3 +253,41 @@ func (r *repo) List(ctx context.Context, limit, offset int64) ([]*model.User, er
 
 	return converter.FromRepoToServiceList(repoUsers), nil
 }
+
+// CheckUsersExist checks if all users with the given IDs exist in the database.
+// It returns an error if any of the provided IDs do not exist.
+func (r *repo) CheckUsersExist(ctx context.Context, ids []int64) error {
+	builder := sq.Select(columnID).
+		From(tableUsers).
+		Where(sq.Eq{columnID: ids}).
+		PlaceholderFormat(sq.Dollar)
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return err
+	}
+
+	q := db.Query{
+		Name:     "user_repository.CheckUsersExist",
+		QueryRaw: query,
+	}
+
+	var dbIDs []int64
+	err = r.db.DB().ScanAllContext(ctx, &dbIDs, q, args...)
+	if err != nil {
+		return err
+	}
+
+	existingIDMap := make(map[int64]bool, len(dbIDs))
+	for _, id := range dbIDs {
+		existingIDMap[id] = true
+	}
+
+	for _, id := range ids {
+		if _, exists := existingIDMap[id]; !exists {
+			return customerrors.NewErrNotFound(userEntity, id)
+		}
+	}
+
+	return nil
+}

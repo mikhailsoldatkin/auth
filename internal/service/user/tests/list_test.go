@@ -110,7 +110,7 @@ func TestList(t *testing.T) {
 			t.Parallel()
 
 			userRepoMock := tt.userRepoMock(mc)
-			service := user.NewMockService(userRepoMock)
+			service := user.NewMockUserService(userRepoMock)
 
 			resp, repoErr := service.List(tt.args.ctx, tt.args.limit, tt.args.offset)
 			require.Equal(t, tt.err, repoErr)

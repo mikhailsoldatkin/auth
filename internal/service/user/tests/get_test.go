@@ -90,7 +90,7 @@ func TestGet(t *testing.T) {
 			t.Parallel()
 
 			userRepoMock := tt.userRepoMock(mc)
-			service := user.NewMockService(userRepoMock)
+			service := user.NewMockUserService(userRepoMock)
 
 			resp, repoErr := service.Get(tt.args.ctx, *tt.args.req.ID)
 			require.Equal(t, tt.err, repoErr)

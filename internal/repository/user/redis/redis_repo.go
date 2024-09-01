@@ -107,3 +107,8 @@ func (r *repo) List(_ context.Context, _, _ int64) ([]*model.User, error) {
 func (r *repo) GetEndpointRoles(_ context.Context, _ string) ([]string, error) {
 	return nil, fmt.Errorf("method not implemented")
 }
+
+// CheckUsersExist not implemented.
+func (r *repo) CheckUsersExist(_ context.Context, _ []int64) error {
+	return fmt.Errorf("method not implemented")
+}

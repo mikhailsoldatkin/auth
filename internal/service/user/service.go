@@ -47,8 +47,8 @@ func (noOpTxManager) ReadCommitted(ctx context.Context, f db.Handler) error {
 	return f(ctx)
 }
 
-// NewMockService creates a new mock instance of the user service.
-func NewMockService(deps ...any) service.UserService {
+// NewMockUserService creates a new mock instance of the user service.
+func NewMockUserService(deps ...any) service.UserService {
 	srv := userService{
 		logRepository: noOpLogRepository{},
 		txManager:     noOpTxManager{},

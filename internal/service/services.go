@@ -13,6 +13,7 @@ type UserService interface {
 	Delete(ctx context.Context, id int64) error
 	Update(ctx context.Context, updates *model.User) error
 	List(ctx context.Context, limit, offset int64) ([]*model.User, error)
+	CheckUsersExist(ctx context.Context, ids []int64) error
 }
 
 // ConsumerService defines the interface for running a Kafka consumer.

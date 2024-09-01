@@ -15,6 +15,7 @@ type UserRepository interface {
 	Delete(ctx context.Context, id int64) error
 	Update(ctx context.Context, updates *model.User) error
 	List(ctx context.Context, limit, offset int64) ([]*model.User, error)
+	CheckUsersExist(ctx context.Context, ids []int64) error
 }
 
 // LogRepository defines the interface for logging database operations.
