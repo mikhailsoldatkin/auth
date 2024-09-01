@@ -3,11 +3,11 @@ package pg
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v4"
+	"github.com/mikhailsoldatkin/auth/internal/repository/user/pg/filter"
 	"github.com/mikhailsoldatkin/platform_common/pkg/db"
 	"golang.org/x/crypto/bcrypt"
 
@@ -85,8 +85,13 @@ func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
 	return id, nil
 }
 
-// Get retrieves a user by ID from the database.
-func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
+// Get retrieves a user by given filter parameter from the database.
+func (r *repo) Get(ctx context.Context, f filter.UserFilter) (*model.User, error) {
+	err := f.Validate()
+	if err != nil {
+		return nil, err
+	}
+
 	builder := sq.Select(
 		columnID,
 		columnUsername,
@@ -97,8 +102,18 @@ func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 		columnUpdatedAt,
 	).
 		From(tableUsers).
-		Where(sq.Eq{columnID: id}).
 		PlaceholderFormat(sq.Dollar)
+
+	var notFoundErr error
+
+	switch {
+	case f.ID != nil:
+		builder = builder.Where(sq.Eq{columnID: *f.ID})
+		notFoundErr = customerrors.NewErrNotFound(userEntity, *f.ID)
+	case f.Username != nil:
+		builder = builder.Where(sq.Eq{columnUsername: *f.Username})
+		notFoundErr = customerrors.NewErrNotFound(userEntity, *f.Username)
+	}
 
 	query, args, err := builder.ToSql()
 	if err != nil {
@@ -114,40 +129,7 @@ func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 	err = r.db.DB().ScanOneContext(ctx, &user, q, args...)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, customerrors.NewErrNotFound(userEntity, id)
-		}
-		return nil, err
-	}
-
-	return converter.FromRepoToService(&user), nil
-}
-
-// GetByUsername retrieves a user by username from the database.
-func (r *repo) GetByUsername(ctx context.Context, username string) (*model.User, error) {
-	builder := sq.Select(
-		columnUsername,
-		columnRole,
-		columnPassword,
-	).
-		From(tableUsers).
-		Where(sq.Eq{columnUsername: username}).
-		PlaceholderFormat(sq.Dollar)
-
-	query, args, err := builder.ToSql()
-	if err != nil {
-		return nil, err
-	}
-
-	q := db.Query{
-		Name:     "user_repository.GetByUsername",
-		QueryRaw: query,
-	}
-
-	var user repoModel.User
-	err = r.db.DB().ScanOneContext(ctx, &user, q, args...)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, fmt.Errorf("user with username %s not found", username)
+			return nil, notFoundErr
 		}
 		return nil, err
 	}

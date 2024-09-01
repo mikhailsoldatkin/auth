@@ -2,10 +2,11 @@ package redis
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"strconv"
 
 	redigo "github.com/gomodule/redigo/redis"
+	"github.com/mikhailsoldatkin/auth/internal/repository/user/pg/filter"
 	"github.com/mikhailsoldatkin/platform_common/pkg/cache"
 	"golang.org/x/crypto/bcrypt"
 
@@ -49,15 +50,19 @@ func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
 }
 
 // Get retrieves a user from Redis by ID.
-func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
-	key := strconv.FormatInt(id, 10)
+func (r *repo) Get(ctx context.Context, f filter.UserFilter) (*model.User, error) {
+	if f.ID == nil {
+		return nil, fmt.Errorf("failed to get user from cache, ID required")
+	}
+
+	key := strconv.FormatInt(*f.ID, 10)
 	values, err := r.cl.HGetAll(ctx, key)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(values) == 0 {
-		return nil, customerrors.NewErrNotFound(userEntity, id)
+		return nil, customerrors.NewErrNotFound(userEntity, *f.ID)
 	}
 
 	var user repoModel.User
@@ -95,15 +100,10 @@ func (r *repo) Update(ctx context.Context, updates *model.User) error {
 
 // List not implemented.
 func (r *repo) List(_ context.Context, _, _ int64) ([]*model.User, error) {
-	return nil, errors.New("method not implemented")
-}
-
-// GetByUsername not implemented.
-func (r *repo) GetByUsername(_ context.Context, _ string) (*model.User, error) {
-	return nil, errors.New("method not implemented")
+	return nil, fmt.Errorf("method not implemented")
 }
 
 // GetEndpointRoles not implemented.
 func (r *repo) GetEndpointRoles(_ context.Context, _ string) ([]string, error) {
-	return nil, errors.New("method not implemented")
+	return nil, fmt.Errorf("method not implemented")
 }

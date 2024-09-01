@@ -9,17 +9,17 @@ import (
 var _ service.AuthService = (*authService)(nil)
 
 type authService struct {
-	userRepo repository.UserRepository
-	config   config.Auth
+	userPGRepo repository.UserRepository
+	config     config.Auth
 }
 
 // NewAuthService creates a new instance of the authentication service.
 func NewAuthService(
-	userRepo repository.UserRepository,
+	userPGRepo repository.UserRepository,
 	config config.Auth,
 ) service.AuthService {
 	return &authService{
-		userRepo: userRepo,
-		config:   config,
+		userPGRepo: userPGRepo,
+		config:     config,
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/mikhailsoldatkin/auth/internal/customerrors"
+	"github.com/mikhailsoldatkin/auth/internal/repository/user/pg/filter"
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 	"github.com/mikhailsoldatkin/auth/internal/utils"
 )
@@ -13,7 +14,7 @@ import (
 // Login authenticates a user with the provided username and password.
 // Validates the credentials and, if successful, returns an access token.
 func (a authService) Login(ctx context.Context, username, password string) (string, error) {
-	user, err := a.userRepo.GetByUsername(ctx, username)
+	user, err := a.userPGRepo.Get(ctx, filter.UserFilter{Username: &username})
 	if err != nil {
 		return "", err
 	}

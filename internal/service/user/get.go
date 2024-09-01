@@ -4,18 +4,19 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/mikhailsoldatkin/auth/internal/repository/user/pg/filter"
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 )
 
 // Get retrieves a user from the system by ID.
 // It first attempts to fetch the user from cache; if unavailable, it fetches from database.
 func (s *userService) Get(ctx context.Context, id int64) (*model.User, error) {
-	user, err := s.redisRepository.Get(ctx, id)
+	user, err := s.redisRepository.Get(ctx, filter.UserFilter{ID: &id})
 	if err == nil && user != nil {
 		return user, nil
 	}
 
-	user, err = s.pgRepository.Get(ctx, id)
+	user, err = s.pgRepository.Get(ctx, filter.UserFilter{ID: &id})
 	if err != nil {
 		return nil, err
 	}

@@ -4,20 +4,29 @@ import "fmt"
 
 // ErrNotFound represents an error for a missing entity with additional context.
 type ErrNotFound struct {
-	Entity string
-	ID     int64
+	Entity     string
+	Identifier string
 }
 
 // Error implements the error interface for ErrNotFound.
 func (e *ErrNotFound) Error() string {
-	return fmt.Sprintf("%s %d not found", e.Entity, e.ID)
+	return fmt.Sprintf("%s with %s not found", e.Entity, e.Identifier)
 }
 
-// NewErrNotFound creates a new ErrNotFound for a given entity and ID.
-func NewErrNotFound(entity string, id int64) error {
+// NewErrNotFound creates a new ErrNotFound for a given entity and identifier.
+func NewErrNotFound(entity string, identifier any) error {
+	var idStr string
+	switch v := identifier.(type) {
+	case int64:
+		idStr = fmt.Sprintf("ID %d", v)
+	case string:
+		idStr = fmt.Sprintf("username '%s'", v)
+	default:
+		idStr = fmt.Sprintf("unknown identifier %v", v)
+	}
 	return &ErrNotFound{
-		Entity: entity,
-		ID:     id,
+		Entity:     entity,
+		Identifier: idStr,
 	}
 }
 
