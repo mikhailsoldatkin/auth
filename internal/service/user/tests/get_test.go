@@ -8,6 +8,7 @@ import (
 
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/gojuno/minimock/v3"
+	"github.com/mikhailsoldatkin/auth/internal/repository/user/pg/filter"
 	"github.com/stretchr/testify/require"
 
 	"github.com/mikhailsoldatkin/auth/internal/repository"
@@ -22,7 +23,7 @@ func TestGet(t *testing.T) {
 
 	type args struct {
 		ctx context.Context
-		req int64
+		req filter.UserFilter
 	}
 
 	var (
@@ -34,7 +35,7 @@ func TestGet(t *testing.T) {
 		email = gofakeit.Email()
 		role  = gofakeit.RandomString([]string{"USER", "ADMIN"})
 		now   = time.Now()
-		req   = id
+		req   = filter.UserFilter{ID: &id}
 
 		wantUser = &model.User{
 			ID:        id,
@@ -91,7 +92,7 @@ func TestGet(t *testing.T) {
 			userRepoMock := tt.userRepoMock(mc)
 			service := user.NewMockService(userRepoMock)
 
-			resp, repoErr := service.Get(tt.args.ctx, tt.args.req)
+			resp, repoErr := service.Get(tt.args.ctx, *tt.args.req.ID)
 			require.Equal(t, tt.err, repoErr)
 			require.Equal(t, tt.want, resp)
 		})
