@@ -106,11 +106,10 @@ func (r *repo) Get(ctx context.Context, f filter.UserFilter) (*model.User, error
 
 	var notFoundErr error
 
-	switch {
-	case f.ID != nil:
+	if f.ID != nil {
 		builder = builder.Where(sq.Eq{columnID: *f.ID})
 		notFoundErr = customerrors.NewErrNotFound(userEntity, *f.ID)
-	case f.Username != nil:
+	} else {
 		builder = builder.Where(sq.Eq{columnUsername: *f.Username})
 		notFoundErr = customerrors.NewErrNotFound(userEntity, *f.Username)
 	}
