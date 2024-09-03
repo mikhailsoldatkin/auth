@@ -2,7 +2,7 @@ package filter
 
 import "fmt"
 
-// UserFilter is used to filter users by ID or Username.
+// UserFilter is used to filter users by ID or Username (unique fields).
 type UserFilter struct {
 	ID       *int64
 	Username *string

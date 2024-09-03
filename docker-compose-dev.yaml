@@ -10,6 +10,9 @@ services:
       - ${SWAGGER_PORT}:${SWAGGER_PORT}
     env_file:
       - .env
+    networks:
+      - microservices_network
+      - internal_network
     depends_on:
       redis:
         condition: service_healthy
@@ -32,6 +35,8 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: always
+    networks:
+      - internal_network
 
   migrator:
     build:
@@ -39,6 +44,8 @@ services:
       dockerfile: migrator.Dockerfile
     container_name: ${MIGRATOR_NAME}
     restart: on-failure
+    networks:
+      - internal_network
 
   redis:
     image: redis:7.4.0-alpine3.20
@@ -53,6 +60,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    networks:
+      - internal_network
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.7.0
@@ -62,6 +71,8 @@ services:
       - ${ZOOKEEPER_CLIENT_PORT}:${ZOOKEEPER_CLIENT_PORT}
     env_file:
       - .env
+    networks:
+      - internal_network
 
   kafka1:
     image: confluentinc/cp-kafka:7.7.0
@@ -82,6 +93,8 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS_1}
+    networks:
+      - internal_network
 
   kafka2:
     image: confluentinc/cp-kafka:7.7.0
@@ -102,6 +115,8 @@ services:
     environment:
       KAFKA_BROKER_ID: 2
       KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS_2}
+    networks:
+      - internal_network
 
   kafka3:
     image: confluentinc/cp-kafka:7.7.0
@@ -122,6 +137,8 @@ services:
     environment:
       KAFKA_BROKER_ID: 3
       KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS_3}
+    networks:
+      - internal_network
 
   kafka-ui:
     container_name: kafka-ui
@@ -130,7 +147,15 @@ services:
       - ${KAFKA_UI_PORT}:${HTTP_PORT}
     env_file:
       - .env
+    networks:
+      - internal_network
 
 volumes:
   pgdata:
   redisdata:
+
+networks:
+  microservices_network:
+    external: true
+  internal_network:
+    driver: bridge
