@@ -56,6 +56,12 @@ service UserV1 {
       delete: "/user/v1/{id}"
     };
   }
+  rpc CheckUsersExist(CheckUsersExistRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/user/v1/check"
+      body: "*"
+    };
+  }
 }
 
 enum Role {
@@ -66,7 +72,7 @@ enum Role {
 
 message User {
   int64 id = 1;
-  string name = 2 [(validate.rules).string = {min_len: 1, max_len: 25}];
+  string username = 2 [(validate.rules).string = {min_len: 1, max_len: 25}];
   string email = 3 [(validate.rules).string = {email: true}];
   Role role = 4 [(validate.rules).enum = {defined_only: true}];
   google.protobuf.Timestamp created_at = 5;
@@ -74,7 +80,7 @@ message User {
 }
 
 message CreateRequest {
-  string name = 1 [(validate.rules).string = {min_len: 1, max_len: 25}];
+  string username = 1 [(validate.rules).string = {min_len: 1, max_len: 25}];
   string email = 2 [(validate.rules).string = {email: true}];
   string password = 3 [(validate.rules).string = {min_len: 8, max_len: 25}];
   string password_confirm = 4 [(validate.rules).string = {min_len: 8, max_len: 25}];
@@ -95,7 +101,7 @@ message GetResponse {
 
 message UpdateRequest {
   int64 id = 1 [(validate.rules).int64 = {gt: 0}];
-  google.protobuf.StringValue name = 2 [(validate.rules).string = {min_len: 1, max_len: 25}];
+  google.protobuf.StringValue username = 2 [(validate.rules).string = {min_len: 1, max_len: 25}];
   google.protobuf.StringValue email = 3 [(validate.rules).string = {email: true}];
   Role role = 4 [(validate.rules).enum = {defined_only: true}];
 }
@@ -111,4 +117,8 @@ message ListRequest {
 
 message ListResponse {
   repeated User users = 1;
+}
+
+message CheckUsersExistRequest {
+  repeated int64 ids = 1;
 }

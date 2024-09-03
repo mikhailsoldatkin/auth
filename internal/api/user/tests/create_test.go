@@ -39,21 +39,21 @@ func TestCreate(t *testing.T) {
 		wrongPassword = "123456789"
 		wrongEmail    = "invalid-email"
 		req           = &pb.CreateRequest{
-			Name:            name,
+			Username:        name,
 			Email:           email,
 			Password:        password,
 			PasswordConfirm: password,
 			Role:            pb.Role(pb.Role_value[role]),
 		}
 		invalidPasswordReq = &pb.CreateRequest{
-			Name:            name,
+			Username:        name,
 			Email:           email,
 			Password:        password,
 			PasswordConfirm: wrongPassword,
 			Role:            pb.Role(pb.Role_value[role]),
 		}
 		invalidEmailReq = &pb.CreateRequest{
-			Name:            name,
+			Username:        name,
 			Email:           wrongEmail,
 			Password:        password,
 			PasswordConfirm: password,
@@ -64,9 +64,9 @@ func TestCreate(t *testing.T) {
 			Id: id,
 		}
 		wantUser = &model.User{
-			Name:  name,
-			Email: email,
-			Role:  role,
+			Username: name,
+			Email:    email,
+			Role:     role,
 		}
 		wantErr         = fmt.Errorf("service error")
 		wantPasswordErr = status.Errorf(codes.InvalidArgument, "password validation failed: passwords don't match")
@@ -91,7 +91,7 @@ func TestCreate(t *testing.T) {
 			userServiceMock: func(mc *minimock.Controller) service.UserService {
 				mock := serviceMocks.NewUserServiceMock(mc)
 				mock.CreateMock.Set(func(_ context.Context, user *model.User) (int64, error) {
-					require.Equal(t, wantUser.Name, user.Name)
+					require.Equal(t, wantUser.Username, user.Username)
 					require.Equal(t, wantUser.Email, user.Email)
 					require.Equal(t, wantUser.Role, user.Role)
 					return id, nil

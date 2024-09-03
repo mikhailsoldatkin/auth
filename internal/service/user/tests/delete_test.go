@@ -71,7 +71,7 @@ func TestDelete(t *testing.T) {
 			t.Parallel()
 
 			userRepoMock := tt.userRepoMock(mc)
-			service := user.NewMockService(userRepoMock)
+			service := user.NewMockUserService(userRepoMock)
 
 			repoErr := service.Delete(tt.args.ctx, tt.args.req)
 			require.Equal(t, tt.err, repoErr)

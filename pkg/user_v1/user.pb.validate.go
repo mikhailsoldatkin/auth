@@ -58,9 +58,9 @@ func (m *User) validate(all bool) error {
 
 	// no validation rules for Id
 
-	if l := utf8.RuneCountInString(m.GetName()); l < 1 || l > 25 {
+	if l := utf8.RuneCountInString(m.GetUsername()); l < 1 || l > 25 {
 		err := UserValidationError{
-			field:  "Name",
+			field:  "Username",
 			reason: "value length must be between 1 and 25 runes, inclusive",
 		}
 		if !all {
@@ -299,9 +299,9 @@ func (m *CreateRequest) validate(all bool) error {
 
 	var errors []error
 
-	if l := utf8.RuneCountInString(m.GetName()); l < 1 || l > 25 {
+	if l := utf8.RuneCountInString(m.GetUsername()); l < 1 || l > 25 {
 		err := CreateRequestValidationError{
-			field:  "Name",
+			field:  "Username",
 			reason: "value length must be between 1 and 25 runes, inclusive",
 		}
 		if !all {
@@ -856,11 +856,11 @@ func (m *UpdateRequest) validate(all bool) error {
 		errors = append(errors, err)
 	}
 
-	if wrapper := m.GetName(); wrapper != nil {
+	if wrapper := m.GetUsername(); wrapper != nil {
 
 		if l := utf8.RuneCountInString(wrapper.GetValue()); l < 1 || l > 25 {
 			err := UpdateRequestValidationError{
-				field:  "Name",
+				field:  "Username",
 				reason: "value length must be between 1 and 25 runes, inclusive",
 			}
 			if !all {
@@ -1390,3 +1390,105 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ListResponseValidationError{}
+
+// Validate checks the field values on CheckUsersExistRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CheckUsersExistRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CheckUsersExistRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CheckUsersExistRequestMultiError, or nil if none found.
+func (m *CheckUsersExistRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CheckUsersExistRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if len(errors) > 0 {
+		return CheckUsersExistRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// CheckUsersExistRequestMultiError is an error wrapping multiple validation
+// errors returned by CheckUsersExistRequest.ValidateAll() if the designated
+// constraints aren't met.
+type CheckUsersExistRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CheckUsersExistRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CheckUsersExistRequestMultiError) AllErrors() []error { return m }
+
+// CheckUsersExistRequestValidationError is the validation error returned by
+// CheckUsersExistRequest.Validate if the designated constraints aren't met.
+type CheckUsersExistRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CheckUsersExistRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CheckUsersExistRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CheckUsersExistRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CheckUsersExistRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CheckUsersExistRequestValidationError) ErrorName() string {
+	return "CheckUsersExistRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CheckUsersExistRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCheckUsersExistRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CheckUsersExistRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CheckUsersExistRequestValidationError{}

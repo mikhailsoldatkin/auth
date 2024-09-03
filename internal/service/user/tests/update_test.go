@@ -31,8 +31,8 @@ func TestUpdate(t *testing.T) {
 		id   = gofakeit.Int64()
 		name = gofakeit.Name()
 		req  = &model.User{
-			ID:   id,
-			Name: name,
+			ID:       id,
+			Username: name,
 		}
 		wantErr = fmt.Errorf("repository error")
 	)
@@ -76,7 +76,7 @@ func TestUpdate(t *testing.T) {
 			t.Parallel()
 
 			userRepoMock := tt.userRepoMock(mc)
-			service := user.NewMockService(userRepoMock)
+			service := user.NewMockUserService(userRepoMock)
 
 			repoErr := service.Update(tt.args.ctx, tt.args.req)
 			require.Equal(t, tt.err, repoErr)

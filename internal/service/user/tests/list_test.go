@@ -48,7 +48,7 @@ func TestList(t *testing.T) {
 		wantResp = []*model.User{
 			{
 				ID:        id1,
-				Name:      name1,
+				Username:  name1,
 				Email:     email1,
 				Role:      role1,
 				CreatedAt: now1,
@@ -56,7 +56,7 @@ func TestList(t *testing.T) {
 			},
 			{
 				ID:        id2,
-				Name:      name2,
+				Username:  name2,
 				Email:     email2,
 				Role:      role2,
 				CreatedAt: now2,
@@ -110,7 +110,7 @@ func TestList(t *testing.T) {
 			t.Parallel()
 
 			userRepoMock := tt.userRepoMock(mc)
-			service := user.NewMockService(userRepoMock)
+			service := user.NewMockUserService(userRepoMock)
 
 			resp, repoErr := service.List(tt.args.ctx, tt.args.limit, tt.args.offset)
 			require.Equal(t, tt.err, repoErr)

@@ -20,7 +20,12 @@ RUN apk update && \
 
 WORKDIR /auth
 
+RUN mkdir -p cert
+
 COPY --from=builder /auth/auth_server .
+
 COPY .env .
+COPY cert/service.key cert/service.key
+COPY cert/service.pem cert/service.pem
 
 CMD ["./auth_server"]

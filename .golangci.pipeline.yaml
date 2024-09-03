@@ -17,6 +17,9 @@ linters-settings:
   goconst:
     min-len: 2
     min-occurrences: 2
+  govet:
+    disable:
+      - printf
 
 linters:
   disable-all: true
@@ -46,7 +49,6 @@ issues:
     - \.pb\.go$
     - \.pb\.gw\.go$
   exclude:
-    # _ instead of err checks
     - G104
     - exported func .* returns unexported type .*, which can be annoying to use
     - should have a package comment

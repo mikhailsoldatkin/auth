@@ -8,7 +8,7 @@ import (
 )
 
 // Create creates a new user in the system, logs the operation and caches the user.
-func (s *userServ) Create(ctx context.Context, user *model.User) (int64, error) {
+func (s *userService) Create(ctx context.Context, user *model.User) (int64, error) {
 	var id int64
 	err := s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
 		var errTx error

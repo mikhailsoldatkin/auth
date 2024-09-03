@@ -41,7 +41,7 @@ func TestGet(t *testing.T) {
 		}
 		wantUser = &model.User{
 			ID:        id,
-			Name:      name,
+			Username:  name,
 			Email:     email,
 			Role:      role,
 			CreatedAt: now,
@@ -50,7 +50,7 @@ func TestGet(t *testing.T) {
 		wantResp = &pb.GetResponse{
 			User: &pb.User{
 				Id:        id,
-				Name:      name,
+				Username:  name,
 				Email:     email,
 				Role:      pb.Role(pb.Role_value[role]),
 				CreatedAt: timestamppb.New(now),

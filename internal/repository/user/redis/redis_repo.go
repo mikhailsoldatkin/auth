@@ -2,11 +2,13 @@ package redis
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"strconv"
 
 	redigo "github.com/gomodule/redigo/redis"
+	"github.com/mikhailsoldatkin/auth/internal/repository/user/pg/filter"
 	"github.com/mikhailsoldatkin/platform_common/pkg/cache"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/mikhailsoldatkin/auth/internal/customerrors"
 	"github.com/mikhailsoldatkin/auth/internal/repository"
@@ -14,6 +16,8 @@ import (
 	repoModel "github.com/mikhailsoldatkin/auth/internal/repository/user/redis/model"
 	"github.com/mikhailsoldatkin/auth/internal/service/user/model"
 )
+
+var _ repository.UserRepository = (*repo)(nil)
 
 const (
 	userEntity = "user"
@@ -31,7 +35,13 @@ func NewRepository(cl cache.RedisClient) repository.UserRepository {
 // Create stores a new user in Redis and returns user's ID.
 func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
 	key := strconv.FormatInt(user.ID, 10)
-	err := r.cl.HashSet(ctx, key, converter.FromServiceToRepo(user))
+	password, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return 0, err
+	}
+	user.Password = string(password)
+
+	err = r.cl.HashSet(ctx, key, converter.FromServiceToRepo(user))
 	if err != nil {
 		return 0, err
 	}
@@ -40,15 +50,19 @@ func (r *repo) Create(ctx context.Context, user *model.User) (int64, error) {
 }
 
 // Get retrieves a user from Redis by ID.
-func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
-	key := strconv.FormatInt(id, 10)
+func (r *repo) Get(ctx context.Context, f filter.UserFilter) (*model.User, error) {
+	if f.ID == nil {
+		return nil, fmt.Errorf("failed to get user from cache, ID required")
+	}
+
+	key := strconv.FormatInt(*f.ID, 10)
 	values, err := r.cl.HGetAll(ctx, key)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(values) == 0 {
-		return nil, customerrors.NewErrNotFound(userEntity, id)
+		return nil, customerrors.NewErrNotFound(userEntity, *f.ID)
 	}
 
 	var user repoModel.User
@@ -84,7 +98,17 @@ func (r *repo) Update(ctx context.Context, updates *model.User) error {
 	return nil
 }
 
-// List retrieves all users from Redis based on the provided limit and offset.
+// List not implemented.
 func (r *repo) List(_ context.Context, _, _ int64) ([]*model.User, error) {
-	return nil, errors.New("list method not implemented")
+	return nil, fmt.Errorf("method not implemented")
+}
+
+// GetEndpointRoles not implemented.
+func (r *repo) GetEndpointRoles(_ context.Context, _ string) ([]string, error) {
+	return nil, fmt.Errorf("method not implemented")
+}
+
+// CheckUsersExist not implemented.
+func (r *repo) CheckUsersExist(_ context.Context, _ []int64) error {
+	return fmt.Errorf("method not implemented")
 }

@@ -16,12 +16,15 @@ import (
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
 	"github.com/mikhailsoldatkin/auth/internal/config"
 	"github.com/mikhailsoldatkin/auth/internal/interceptor"
-	pb "github.com/mikhailsoldatkin/auth/pkg/user_v1"
+	pbAccess "github.com/mikhailsoldatkin/auth/pkg/access_v1"
+	pbAuth "github.com/mikhailsoldatkin/auth/pkg/auth_v1"
+	pbUser "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 	"github.com/mikhailsoldatkin/platform_common/pkg/closer"
 
 	// Register statik to serve Swagger UI and static files
@@ -123,6 +126,7 @@ func gracefulShutdown(ctx context.Context, cancel context.CancelFunc, wg *sync.W
 func waitSignal() chan os.Signal {
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, syscall.SIGINT, syscall.SIGTERM)
+
 	return sigterm
 }
 
@@ -159,18 +163,27 @@ func (a *App) initConfig(_ context.Context) error {
 // initServiceProvider initializes the service provider used by the application.
 func (a *App) initServiceProvider(_ context.Context) error {
 	a.serviceProvider = newServiceProvider()
+
 	return nil
 }
 
 // initGRPCServer initializes the GRPC server.
 func (a *App) initGRPCServer(ctx context.Context) error {
+	creds, err := credentials.NewServerTLSFromFile("cert/service.pem", "cert/service.key")
+	if err != nil {
+		log.Fatalf("failed to load TLS credentials from files: %v", err)
+	}
+
 	a.grpcServer = grpc.NewServer(
-		grpc.Creds(insecure.NewCredentials()),
+		grpc.Creds(creds),
 		grpc.UnaryInterceptor(interceptor.ValidateInterceptor),
 	)
 
 	reflection.Register(a.grpcServer)
-	pb.RegisterUserV1Server(a.grpcServer, a.serviceProvider.UserImplementation(ctx))
+
+	pbUser.RegisterUserV1Server(a.grpcServer, a.serviceProvider.UserImplementation(ctx))
+	pbAuth.RegisterAuthV1Server(a.grpcServer, a.serviceProvider.AuthImplementation(ctx))
+	pbAccess.RegisterAccessV1Server(a.grpcServer, a.serviceProvider.AccessImplementation(ctx))
 
 	return nil
 }
@@ -183,7 +196,7 @@ func (a *App) initHTTPServer(ctx context.Context) error {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
 
-	err := pb.RegisterUserV1HandlerFromEndpoint(ctx, mux, a.serviceProvider.config.GRPC.Address, opts)
+	err := pbUser.RegisterUserV1HandlerFromEndpoint(ctx, mux, a.serviceProvider.config.GRPC.Address, opts)
 	if err != nil {
 		return err
 	}

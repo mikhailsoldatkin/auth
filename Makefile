@@ -1,7 +1,10 @@
 include .env
 LOCAL_BIN:=$(CURDIR)/bin
 USER_V1:=user_v1
+AUTH_V1:=auth_v1
+ACCESS_V1:=access_v1
 REPO:=github.com/mikhailsoldatkin/auth
+CERT_FOLDER:=cert
 
 install-golangci-lint:
 	GOBIN=$(LOCAL_BIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53.3
@@ -28,6 +31,8 @@ get-deps:
 generate:
 	mkdir -p pkg/swagger
 	make generate-user-api
+	make generate-auth-api
+	make generate-access-api
 	$(LOCAL_BIN)/statik -f -src=pkg/swagger/ -include='*.css,*.html,*.js,*.json,*.png'
 
 generate-user-api:
@@ -45,14 +50,31 @@ generate-user-api:
 	--plugin=protoc-gen-openapiv2=bin/protoc-gen-openapiv2 \
 	api/$(USER_V1)/user.proto
 
+generate-auth-api:
+	mkdir -p pkg/$(AUTH_V1)
+	protoc --proto_path api/$(AUTH_V1) \
+	--go_out=pkg/$(AUTH_V1) --go_opt=paths=source_relative \
+	--plugin=protoc-gen-go=bin/protoc-gen-go \
+	--go-grpc_out=pkg/$(AUTH_V1) --go-grpc_opt=paths=source_relative \
+	--plugin=protoc-gen-go-grpc=bin/protoc-gen-go-grpc \
+	api/$(AUTH_V1)/auth.proto
 
-local-migration-status:
+generate-access-api:
+	mkdir -p pkg/$(ACCESS_V1)
+	protoc --proto_path api/$(ACCESS_V1) \
+	--go_out=pkg/$(ACCESS_V1) --go_opt=paths=source_relative \
+	--plugin=protoc-gen-go=bin/protoc-gen-go \
+	--go-grpc_out=pkg/$(ACCESS_V1) --go-grpc_opt=paths=source_relative \
+	--plugin=protoc-gen-go-grpc=bin/protoc-gen-go-grpc \
+	api/$(ACCESS_V1)/access.proto
+
+local-migrations-status:
 	$(LOCAL_BIN)/goose -dir ${MIGRATIONS_DIR} postgres ${PG_DSN} status -v
 
-local-migration-up:
+local-migrations-up:
 	$(LOCAL_BIN)/goose -dir ${MIGRATIONS_DIR} postgres ${PG_DSN} up -v
 
-local-migration-down:
+local-migrations-down:
 	$(LOCAL_BIN)/goose -dir ${MIGRATIONS_DIR} postgres ${PG_DSN} down -v
 
 test:
@@ -87,3 +109,12 @@ vendor-proto:
 			mv vendor.protogen/openapiv2/protoc-gen-openapiv2/options/*.proto vendor.protogen/protoc-gen-openapiv2/options &&\
 			rm -rf vendor.protogen/openapiv2 ;\
 		fi
+
+gen-cert:
+	mkdir -p $(CERT_FOLDER)
+	openssl genrsa -out $(CERT_FOLDER)/ca.key 4096 && \
+    openssl req -new -x509 -key $(CERT_FOLDER)/ca.key -sha256 -subj "/C=RU/ST=Moscow/O=Test, Inc." -days 365 -out $(CERT_FOLDER)/ca.cert && \
+    openssl genrsa -out $(CERT_FOLDER)/service.key 4096 && \
+    openssl req -new -key $(CERT_FOLDER)/service.key -out $(CERT_FOLDER)/service.csr -config $(CERT_FOLDER)/certificate.conf && \
+    openssl x509 -req -in $(CERT_FOLDER)/service.csr -CA $(CERT_FOLDER)/ca.cert -CAkey $(CERT_FOLDER)/ca.key -CAcreateserial \
+        -out $(CERT_FOLDER)/service.pem -days 365 -sha256 -extfile $(CERT_FOLDER)/certificate.conf -extensions req_ext

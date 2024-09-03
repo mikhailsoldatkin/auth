@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	fieldName      = "name"
+	fieldUsername  = "username"
 	fieldEmail     = "email"
 	fieldRole      = "role"
 	fieldUpdatedAt = "updated_at"
@@ -19,9 +19,10 @@ const (
 func FromRepoToService(user *modelRepo.User) *model.User {
 	return &model.User{
 		ID:        user.ID,
-		Name:      user.Name,
+		Username:  user.Username,
 		Email:     user.Email,
 		Role:      user.Role,
+		Password:  user.Password,
 		CreatedAt: time.Unix(0, user.CreatedAtNs),
 		UpdatedAt: time.Unix(0, user.UpdatedAtNs),
 	}
@@ -32,9 +33,10 @@ func FromServiceToRepo(user *model.User) *modelRepo.User {
 	now := time.Now().UnixNano()
 	repoUser := &modelRepo.User{
 		ID:          user.ID,
-		Name:        user.Name,
+		Username:    user.Username,
 		Email:       user.Email,
 		Role:        user.Role,
+		Password:    user.Password,
 		CreatedAtNs: now,
 		UpdatedAtNs: now,
 	}
@@ -46,8 +48,8 @@ func FromServiceToRepo(user *model.User) *modelRepo.User {
 func FromServiceToRepoUpdate(updates *model.User) map[string]any {
 	updateFields := make(map[string]any)
 
-	if updates.Name != "" {
-		updateFields[fieldName] = updates.Name
+	if updates.Username != "" {
+		updateFields[fieldUsername] = updates.Username
 	}
 	if updates.Email != "" {
 		updateFields[fieldEmail] = updates.Email

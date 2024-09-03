@@ -15,11 +15,19 @@ func ConvertError(err error) error {
 	}
 
 	var errNotFound *ErrNotFound
+	var errInvalidPassword *ErrInvalidPassword
+	var errInvalidToken *ErrInvalidToken
+	var errForbidden *ErrForbidden
 
 	switch {
 	case errors.As(err, &errNotFound):
 		return status.Errorf(codes.NotFound, errNotFound.Error())
-
+	case errors.As(err, &errInvalidPassword):
+		return status.Errorf(codes.Unauthenticated, errInvalidPassword.Error())
+	case errors.As(err, &errInvalidToken):
+		return status.Errorf(codes.Unauthenticated, errInvalidToken.Error())
+	case errors.As(err, &errForbidden):
+		return status.Errorf(codes.PermissionDenied, errForbidden.Error())
 	default:
 		return status.Errorf(codes.Internal, err.Error())
 	}

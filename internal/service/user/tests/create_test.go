@@ -34,9 +34,9 @@ func TestCreate(t *testing.T) {
 		role  = gofakeit.RandomString([]string{"USER", "ADMIN"})
 
 		req = &model.User{
-			Name:  name,
-			Email: email,
-			Role:  role,
+			Username: name,
+			Email:    email,
+			Role:     role,
 		}
 		wantErr = fmt.Errorf("repository error")
 	)
@@ -83,7 +83,7 @@ func TestCreate(t *testing.T) {
 			t.Parallel()
 
 			userRepoMock := tt.userRepoMock(mc)
-			service := user.NewMockService(userRepoMock)
+			service := user.NewMockUserService(userRepoMock)
 
 			resp, repoErr := service.Create(tt.args.ctx, tt.args.req)
 			require.Equal(t, tt.err, repoErr)
