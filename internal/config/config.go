@@ -68,6 +68,15 @@ type Auth struct {
 	AccessTokenExpirationMin  int    `env:"ACCESS_TOKEN_EXPIRATION_MIN" env-required:"true"`
 }
 
+// Logger represents configuration for logger.
+type Logger struct {
+	Level      string `env:"LOG_LEVEL" env-required:"true"`
+	Filename   string `env:"LOG_FILENAME" env-required:"true"`
+	MaxSizeMB  int    `env:"LOG_MAX_SIZE_MB" env-required:"true"`
+	MaxBackups int    `env:"LOG_MAX_BACKUPS" env-required:"true"`
+	MaxAgeDays int    `env:"LOG_MAX_AGE_DAYS" env-required:"true"`
+}
+
 // Config represents the overall application configuration.
 type Config struct {
 	DB            DB
@@ -77,6 +86,7 @@ type Config struct {
 	Swagger       Swagger
 	KafkaConsumer KafkaConsumer
 	Auth          Auth
+	Logger        Logger
 }
 
 // Load reads configuration from .env file.

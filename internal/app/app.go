@@ -13,13 +13,17 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/mikhailsoldatkin/auth/internal/logger"
+	"github.com/natefinch/lumberjack"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
+	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/mikhailsoldatkin/auth/internal/config"
 	"github.com/mikhailsoldatkin/auth/internal/interceptor"
 	pbAccess "github.com/mikhailsoldatkin/auth/pkg/access_v1"
@@ -69,7 +73,7 @@ func (a *App) Run(ctx context.Context) error {
 
 		err := a.runGRPCServer()
 		if err != nil {
-			log.Fatalf("failed to run GRPC server: %v", err)
+			logger.Fatalf("failed to run GRPC server: %v", err)
 		}
 	}()
 
@@ -78,7 +82,7 @@ func (a *App) Run(ctx context.Context) error {
 
 		err := a.runHTTPServer()
 		if err != nil {
-			log.Fatalf("failed to run HTTP server: %v", err)
+			logger.Fatalf("failed to run HTTP server: %v", err)
 		}
 	}()
 
@@ -87,7 +91,7 @@ func (a *App) Run(ctx context.Context) error {
 
 		err := a.runSwaggerServer()
 		if err != nil {
-			log.Fatalf("failed to run Swagger server: %v", err)
+			logger.Fatalf("failed to run Swagger server: %v", err)
 		}
 	}()
 
@@ -96,7 +100,7 @@ func (a *App) Run(ctx context.Context) error {
 
 		err := a.serviceProvider.UserSaverConsumer(ctx).RunConsumer(ctx)
 		if err != nil {
-			log.Printf("failed to run Kafka consumer: %s", err.Error())
+			logger.Fatalf("failed to run Kafka consumer: %v", err)
 		}
 	}()
 
@@ -110,9 +114,9 @@ func (a *App) Run(ctx context.Context) error {
 func gracefulShutdown(ctx context.Context, cancel context.CancelFunc, wg *sync.WaitGroup) {
 	select {
 	case <-ctx.Done():
-		log.Println("terminating: context cancelled")
+		logger.Info("terminating: context cancelled")
 	case <-waitSignal():
-		log.Println("terminating: via signal")
+		logger.Info("terminating: via signal")
 	}
 
 	cancel()
@@ -138,6 +142,7 @@ func (a *App) initDeps(ctx context.Context) error {
 		a.initGRPCServer,
 		a.initHTTPServer,
 		a.initSwaggerServer,
+		a.initLogger,
 	}
 
 	for _, f := range inits {
@@ -167,16 +172,56 @@ func (a *App) initServiceProvider(_ context.Context) error {
 	return nil
 }
 
-// initGRPCServer initializes the GRPC server.
+// initLogger initializes the app logger.
+func (a *App) initLogger(_ context.Context) error {
+	var level zapcore.Level
+	if err := level.Set(a.serviceProvider.config.Logger.Level); err != nil {
+		return err
+	}
+
+	stdout := zapcore.AddSync(os.Stdout)
+
+	file := zapcore.AddSync(&lumberjack.Logger{
+		Filename:   a.serviceProvider.config.Logger.Filename,
+		MaxSize:    a.serviceProvider.config.Logger.MaxSizeMB,
+		MaxBackups: a.serviceProvider.config.Logger.MaxBackups,
+		MaxAge:     a.serviceProvider.config.Logger.MaxAgeDays,
+	})
+
+	productionCfg := zap.NewProductionEncoderConfig()
+	productionCfg.TimeKey = "timestamp"
+	productionCfg.EncodeTime = zapcore.TimeEncoderOfLayout("2006/01/02 15:04:05")
+
+	developmentCfg := zap.NewDevelopmentEncoderConfig()
+	developmentCfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	developmentCfg.EncodeTime = zapcore.TimeEncoderOfLayout("2006/01/02 15:04:05")
+
+	consoleEncoder := zapcore.NewConsoleEncoder(developmentCfg)
+	fileEncoder := zapcore.NewJSONEncoder(productionCfg)
+
+	logger.Init(zapcore.NewTee(
+		zapcore.NewCore(consoleEncoder, stdout, zap.NewAtomicLevelAt(level)),
+		zapcore.NewCore(fileEncoder, file, zap.NewAtomicLevelAt(level)),
+	))
+
+	return nil
+}
+
+// initGRPCServer initializes the gRPC server.
 func (a *App) initGRPCServer(ctx context.Context) error {
 	creds, err := credentials.NewServerTLSFromFile("cert/service.pem", "cert/service.key")
 	if err != nil {
-		log.Fatalf("failed to load TLS credentials from files: %v", err)
+		logger.Fatal("failed to load TLS credentials from files:", zap.Error(err))
 	}
 
 	a.grpcServer = grpc.NewServer(
 		grpc.Creds(creds),
-		grpc.UnaryInterceptor(interceptor.ValidateInterceptor),
+		grpc.UnaryInterceptor(
+			grpcMiddleware.ChainUnaryServer(
+				interceptor.LogInterceptor,
+				interceptor.ValidateInterceptor,
+			),
+		),
 	)
 
 	reflection.Register(a.grpcServer)
@@ -192,11 +237,16 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 func (a *App) initHTTPServer(ctx context.Context) error {
 	mux := runtime.NewServeMux()
 
-	opts := []grpc.DialOption{
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	creds, err := credentials.NewClientTLSFromFile("cert/service.pem", "")
+	if err != nil {
+		logger.Fatal("failed to load TLS credentials for gRPC gateway:", zap.Error(err))
 	}
 
-	err := pbUser.RegisterUserV1HandlerFromEndpoint(ctx, mux, a.serviceProvider.config.GRPC.Address, opts)
+	opts := []grpc.DialOption{
+		grpc.WithTransportCredentials(creds),
+	}
+
+	err = pbUser.RegisterUserV1HandlerFromEndpoint(ctx, mux, a.serviceProvider.config.GRPC.Address, opts)
 	if err != nil {
 		return err
 	}
@@ -239,7 +289,7 @@ func (a *App) initSwaggerServer(_ context.Context) error {
 
 // runHTTPServer starts the HTTP server and listens for incoming requests.
 func (a *App) runHTTPServer() error {
-	log.Printf("HTTP server is running on %d", a.serviceProvider.config.HTTP.Port)
+	logger.Infof("HTTP server is running on %v", a.serviceProvider.config.HTTP.Port)
 
 	err := a.httpServer.ListenAndServe()
 	if err != nil {
@@ -251,7 +301,7 @@ func (a *App) runHTTPServer() error {
 
 // runSwaggerServer starts the Swagger server to serve API documentation.
 func (a *App) runSwaggerServer() error {
-	log.Printf("Swagger server is running on %d", a.serviceProvider.config.Swagger.Port)
+	logger.Infof("Swagger server is running on %d", a.serviceProvider.config.Swagger.Port)
 
 	err := a.swaggerServer.ListenAndServe()
 	if err != nil {
@@ -311,7 +361,7 @@ func (a *App) runGRPCServer() error {
 		return err
 	}
 
-	log.Printf("gRPC server is running on %d", a.serviceProvider.config.GRPC.Port)
+	logger.Infof("gRPC server is running on %d", a.serviceProvider.config.GRPC.Port)
 
 	err = a.grpcServer.Serve(lis)
 	if err != nil {
