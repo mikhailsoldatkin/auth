@@ -14,6 +14,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/mikhailsoldatkin/auth/internal/logger"
+	"github.com/mikhailsoldatkin/auth/internal/metric"
 	"github.com/natefinch/lumberjack"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
@@ -154,6 +155,7 @@ func (a *App) initDeps(ctx context.Context) error {
 		a.initHTTPServer,
 		a.initSwaggerServer,
 		a.initLogger,
+		a.initMetric,
 		a.initPrometheusServer,
 	}
 
@@ -367,13 +369,25 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 	}
 }
 
+// initMetric initializes the metrics system.
+func (a *App) initMetric(ctx context.Context) error {
+	err := metric.Init(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// initPrometheusServer initializes the Prometheus HTTP server.
 func (a *App) initPrometheusServer(_ context.Context) error {
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
 
 	a.prometheusServer = &http.Server{
-		Addr:    a.serviceProvider.config.Prometheus.Address,
-		Handler: mux,
+		Addr:              a.serviceProvider.config.Prometheus.Address,
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	return nil

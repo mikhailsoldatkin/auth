@@ -9,6 +9,7 @@ import (
 	"github.com/mikhailsoldatkin/auth/internal/metric"
 )
 
+// MetricsInterceptor is a gRPC unary interceptor that measures request and response metrics.
 func MetricsInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	metric.IncRequestCounter()
 
