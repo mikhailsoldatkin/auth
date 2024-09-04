@@ -30,6 +30,7 @@ import (
 	pbAuth "github.com/mikhailsoldatkin/auth/pkg/auth_v1"
 	pbUser "github.com/mikhailsoldatkin/auth/pkg/user_v1"
 	"github.com/mikhailsoldatkin/platform_common/pkg/closer"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	// Register statik to serve Swagger UI and static files
 	_ "github.com/mikhailsoldatkin/auth/statik"
@@ -37,10 +38,11 @@ import (
 
 // App represents the application with its dependencies and gRPC, HTTP and Swagger servers.
 type App struct {
-	serviceProvider *serviceProvider
-	grpcServer      *grpc.Server
-	httpServer      *http.Server
-	swaggerServer   *http.Server
+	serviceProvider  *serviceProvider
+	grpcServer       *grpc.Server
+	httpServer       *http.Server
+	swaggerServer    *http.Server
+	prometheusServer *http.Server
 }
 
 // NewApp initializes a new App instance with the given context and sets up the necessary dependencies.
@@ -66,7 +68,7 @@ func (a *App) Run(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 
 	wg := &sync.WaitGroup{}
-	wg.Add(4)
+	wg.Add(5)
 
 	go func() {
 		defer wg.Done()
@@ -101,6 +103,15 @@ func (a *App) Run(ctx context.Context) error {
 		err := a.serviceProvider.UserSaverConsumer(ctx).RunConsumer(ctx)
 		if err != nil {
 			logger.Fatalf("failed to run Kafka consumer: %v", err)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		err := a.runPrometheusServer()
+		if err != nil {
+			logger.Fatalf("failed to run Prometheus server: %v", err)
 		}
 	}()
 
@@ -143,6 +154,7 @@ func (a *App) initDeps(ctx context.Context) error {
 		a.initHTTPServer,
 		a.initSwaggerServer,
 		a.initLogger,
+		a.initPrometheusServer,
 	}
 
 	for _, f := range inits {
@@ -219,6 +231,7 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 		grpc.UnaryInterceptor(
 			grpcMiddleware.ChainUnaryServer(
 				interceptor.LogInterceptor,
+				interceptor.MetricsInterceptor,
 				interceptor.ValidateInterceptor,
 			),
 		),
@@ -314,7 +327,7 @@ func (a *App) runSwaggerServer() error {
 // serveSwaggerFile returns an HTTP handler function to serve Swagger files.
 func serveSwaggerFile(path string) http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
-		log.Printf("Serving swagger file: %s", path)
+		logger.Infof("serving swagger file: %s", path)
 
 		statikFs, err := fs.New()
 		if err != nil {
@@ -322,7 +335,7 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 			return
 		}
 
-		log.Printf("Open swagger file: %s", path)
+		logger.Infof("open swagger file: %s", path)
 
 		file, err := statikFs.Open(path)
 		if err != nil {
@@ -333,7 +346,7 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 			_ = file.Close()
 		}(file)
 
-		log.Printf("Read swagger file: %s", path)
+		logger.Infof("read swagger file: %s", path)
 
 		content, err := io.ReadAll(file)
 		if err != nil {
@@ -341,7 +354,7 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 			return
 		}
 
-		log.Printf("Write swagger file: %s", path)
+		logger.Infof("write swagger file: %s", path)
 
 		w.Header().Set("Content-Type", "application/json")
 		_, err = w.Write(content)
@@ -350,8 +363,32 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 			return
 		}
 
-		log.Printf("Served swagger file: %s", path)
+		log.Printf("served swagger file: %s", path)
 	}
+}
+
+func (a *App) initPrometheusServer(_ context.Context) error {
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+
+	a.prometheusServer = &http.Server{
+		Addr:    a.serviceProvider.config.Prometheus.Address,
+		Handler: mux,
+	}
+
+	return nil
+}
+
+// runPrometheusServer starts the Prometheus server.
+func (a *App) runPrometheusServer() error {
+	logger.Infof("Prometheus server is running on %d", a.serviceProvider.config.Prometheus.Port)
+
+	err := a.prometheusServer.ListenAndServe()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // runGRPCServer starts the GRPC server and listens for incoming GRPC requests.
