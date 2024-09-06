@@ -10,8 +10,8 @@ import (
 	"github.com/mikhailsoldatkin/auth/internal/logger"
 )
 
-// LogInterceptor is a gRPC unary server interceptor for logging requests.
-func LogInterceptor(
+// LoggingInterceptor is a gRPC unary server interceptor for logging requests.
+func LoggingInterceptor(
 	ctx context.Context,
 	req interface{},
 	info *grpc.UnaryServerInfo,

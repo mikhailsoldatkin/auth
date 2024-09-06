@@ -235,7 +235,8 @@ func (s *serviceProvider) AccessService(ctx context.Context) service.AccessServi
 	if s.accessService == nil {
 		s.accessService = accessService.NewAccessService(
 			s.PGRepository(ctx),
-			s.config.Auth)
+			s.config.Auth,
+		)
 	}
 
 	return s.accessService
