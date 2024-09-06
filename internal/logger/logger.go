@@ -15,6 +15,11 @@ func Init(core zapcore.Core, options ...zap.Option) {
 	sugarLogger = globalLogger.Sugar()
 }
 
+// Logger returns the global instance of the zap.Logger.
+func Logger() *zap.Logger {
+	return globalLogger
+}
+
 // Debug logs a debug message with structured fields.
 func Debug(msg string, fields ...zap.Field) {
 	globalLogger.Debug(msg, fields...)

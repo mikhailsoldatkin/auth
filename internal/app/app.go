@@ -186,41 +186,6 @@ func (a *App) initServiceProvider(_ context.Context) error {
 	return nil
 }
 
-// initLogger initializes the app logger.
-func (a *App) initLogger(_ context.Context) error {
-	var level zapcore.Level
-	if err := level.Set(a.serviceProvider.config.Logger.Level); err != nil {
-		return err
-	}
-
-	stdout := zapcore.AddSync(os.Stdout)
-
-	file := zapcore.AddSync(&lumberjack.Logger{
-		Filename:   a.serviceProvider.config.Logger.Filename,
-		MaxSize:    a.serviceProvider.config.Logger.MaxSizeMB,
-		MaxBackups: a.serviceProvider.config.Logger.MaxBackups,
-		MaxAge:     a.serviceProvider.config.Logger.MaxAgeDays,
-	})
-
-	productionCfg := zap.NewProductionEncoderConfig()
-	productionCfg.TimeKey = "timestamp"
-	productionCfg.EncodeTime = zapcore.TimeEncoderOfLayout("2006/01/02 15:04:05")
-
-	developmentCfg := zap.NewDevelopmentEncoderConfig()
-	developmentCfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
-	developmentCfg.EncodeTime = zapcore.TimeEncoderOfLayout("2006/01/02 15:04:05")
-
-	consoleEncoder := zapcore.NewConsoleEncoder(developmentCfg)
-	fileEncoder := zapcore.NewJSONEncoder(productionCfg)
-
-	logger.Init(zapcore.NewTee(
-		zapcore.NewCore(consoleEncoder, stdout, zap.NewAtomicLevelAt(level)),
-		zapcore.NewCore(fileEncoder, file, zap.NewAtomicLevelAt(level)),
-	))
-
-	return nil
-}
-
 // initGRPCServer initializes the gRPC server.
 func (a *App) initGRPCServer(ctx context.Context) error {
 	creds, err := credentials.NewServerTLSFromFile("cert/service.pem", "cert/service.key")
@@ -232,8 +197,8 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 		grpc.Creds(creds),
 		grpc.UnaryInterceptor(
 			grpcMiddleware.ChainUnaryServer(
-				interceptor.LogInterceptor,
 				interceptor.MetricsInterceptor,
+				interceptor.LogInterceptor,
 				interceptor.ValidateInterceptor,
 			),
 		),
@@ -244,6 +209,23 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 	pbUser.RegisterUserV1Server(a.grpcServer, a.serviceProvider.UserImplementation(ctx))
 	pbAuth.RegisterAuthV1Server(a.grpcServer, a.serviceProvider.AuthImplementation(ctx))
 	pbAccess.RegisterAccessV1Server(a.grpcServer, a.serviceProvider.AccessImplementation(ctx))
+
+	return nil
+}
+
+// runGRPCServer starts the GRPC server and listens for incoming GRPC requests.
+func (a *App) runGRPCServer() error {
+	lis, err := net.Listen("tcp", a.serviceProvider.config.GRPC.Address)
+	if err != nil {
+		return err
+	}
+
+	logger.Infof("gRPC server is running on %d", a.serviceProvider.config.GRPC.Port)
+
+	err = a.grpcServer.Serve(lis)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -282,6 +264,44 @@ func (a *App) initHTTPServer(ctx context.Context) error {
 	return nil
 }
 
+// runHTTPServer starts the HTTP server and listens for incoming requests.
+func (a *App) runHTTPServer() error {
+	logger.Infof("HTTP server is running on %v", a.serviceProvider.config.HTTP.Port)
+
+	err := a.httpServer.ListenAndServe()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// initPrometheusServer initializes the Prometheus HTTP server.
+func (a *App) initPrometheusServer(_ context.Context) error {
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+
+	a.prometheusServer = &http.Server{
+		Addr:              a.serviceProvider.config.Prometheus.Address,
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
+	return nil
+}
+
+// runPrometheusServer starts the Prometheus server.
+func (a *App) runPrometheusServer() error {
+	logger.Infof("Prometheus server is running on %d", a.serviceProvider.config.Prometheus.Port)
+
+	err := a.prometheusServer.ListenAndServe()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // initSwaggerServer initializes the Swagger server to serve Swagger UI and API documentation.
 func (a *App) initSwaggerServer(_ context.Context) error {
 	statikFs, err := fs.New()
@@ -297,18 +317,6 @@ func (a *App) initSwaggerServer(_ context.Context) error {
 		Addr:              a.serviceProvider.config.Swagger.Address,
 		Handler:           mux,
 		ReadHeaderTimeout: 5 * time.Second,
-	}
-
-	return nil
-}
-
-// runHTTPServer starts the HTTP server and listens for incoming requests.
-func (a *App) runHTTPServer() error {
-	logger.Infof("HTTP server is running on %v", a.serviceProvider.config.HTTP.Port)
-
-	err := a.httpServer.ListenAndServe()
-	if err != nil {
-		return err
 	}
 
 	return nil
@@ -369,52 +377,44 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 	}
 }
 
+// initLogger initializes the app logger.
+func (a *App) initLogger(_ context.Context) error {
+	var level zapcore.Level
+	if err := level.Set(a.serviceProvider.config.Logger.Level); err != nil {
+		return err
+	}
+
+	stdout := zapcore.AddSync(os.Stdout)
+
+	file := zapcore.AddSync(&lumberjack.Logger{
+		Filename:   a.serviceProvider.config.Logger.Filename,
+		MaxSize:    a.serviceProvider.config.Logger.MaxSizeMB,
+		MaxBackups: a.serviceProvider.config.Logger.MaxBackups,
+		MaxAge:     a.serviceProvider.config.Logger.MaxAgeDays,
+	})
+
+	productionCfg := zap.NewProductionEncoderConfig()
+	productionCfg.TimeKey = "timestamp"
+	productionCfg.EncodeTime = zapcore.TimeEncoderOfLayout("2006/01/02 15:04:05")
+
+	developmentCfg := zap.NewDevelopmentEncoderConfig()
+	developmentCfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	developmentCfg.EncodeTime = zapcore.TimeEncoderOfLayout("2006/01/02 15:04:05")
+
+	consoleEncoder := zapcore.NewConsoleEncoder(developmentCfg)
+	fileEncoder := zapcore.NewJSONEncoder(productionCfg)
+
+	logger.Init(zapcore.NewTee(
+		zapcore.NewCore(consoleEncoder, stdout, zap.NewAtomicLevelAt(level)),
+		zapcore.NewCore(fileEncoder, file, zap.NewAtomicLevelAt(level)),
+	))
+
+	return nil
+}
+
 // initMetric initializes the metrics system.
 func (a *App) initMetric(ctx context.Context) error {
 	err := metric.Init(ctx)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// initPrometheusServer initializes the Prometheus HTTP server.
-func (a *App) initPrometheusServer(_ context.Context) error {
-	mux := http.NewServeMux()
-	mux.Handle("/metrics", promhttp.Handler())
-
-	a.prometheusServer = &http.Server{
-		Addr:              a.serviceProvider.config.Prometheus.Address,
-		Handler:           mux,
-		ReadHeaderTimeout: 5 * time.Second,
-	}
-
-	return nil
-}
-
-// runPrometheusServer starts the Prometheus server.
-func (a *App) runPrometheusServer() error {
-	logger.Infof("Prometheus server is running on %d", a.serviceProvider.config.Prometheus.Port)
-
-	err := a.prometheusServer.ListenAndServe()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// runGRPCServer starts the GRPC server and listens for incoming GRPC requests.
-func (a *App) runGRPCServer() error {
-	lis, err := net.Listen("tcp", a.serviceProvider.config.GRPC.Address)
-	if err != nil {
-		return err
-	}
-
-	logger.Infof("gRPC server is running on %d", a.serviceProvider.config.GRPC.Port)
-
-	err = a.grpcServer.Serve(lis)
 	if err != nil {
 		return err
 	}
