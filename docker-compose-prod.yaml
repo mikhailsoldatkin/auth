@@ -147,8 +147,6 @@ services:
       - "3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
-    networks:
-      - internal_network
     depends_on:
       prometheus:
         condition: service_started
