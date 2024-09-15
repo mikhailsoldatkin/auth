@@ -91,18 +91,27 @@ type RateLimiter struct {
 	LimitInterval time.Duration `env:"LIMIT_INTERVAL" env-default:"1s"`
 }
 
+// CircuitBreaker holds the configuration for the Circuit Breaker.
+type CircuitBreaker struct {
+	MaxRequests  uint32        `env:"CB_MAX_REQUESTS" env-required:"true"`
+	Timeout      time.Duration `env:"CB_TIMEOUT_SEC" env-required:"true"`
+	FailureRatio float64       `env:"CB_FAILURE_RATIO" env-required:"true"`
+}
+
 // Config represents the overall application configuration.
 type Config struct {
-	DB            DB
-	GRPC          GRPC
-	Redis         Redis
-	HTTP          HTTP
-	Swagger       Swagger
-	KafkaConsumer KafkaConsumer
-	Auth          Auth
-	Logger        Logger
-	Prometheus    Prometheus
-	RateLimiter   RateLimiter
+	AppName        string `env:"APP_NAME" env-required:"true"`
+	DB             DB
+	GRPC           GRPC
+	Redis          Redis
+	HTTP           HTTP
+	Swagger        Swagger
+	KafkaConsumer  KafkaConsumer
+	Auth           Auth
+	Logger         Logger
+	Prometheus     Prometheus
+	RateLimiter    RateLimiter
+	CircuitBreaker CircuitBreaker
 }
 
 // Load reads configuration from .env file.

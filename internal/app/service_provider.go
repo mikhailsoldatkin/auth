@@ -7,12 +7,14 @@ import (
 
 	"github.com/IBM/sarama"
 	redigo "github.com/gomodule/redigo/redis"
+	"github.com/mikhailsoldatkin/auth/internal/rate_limiter"
 	"github.com/mikhailsoldatkin/platform_common/pkg/cache"
 	"github.com/mikhailsoldatkin/platform_common/pkg/cache/redis"
 	"github.com/mikhailsoldatkin/platform_common/pkg/closer"
 	"github.com/mikhailsoldatkin/platform_common/pkg/db"
 	"github.com/mikhailsoldatkin/platform_common/pkg/db/pg"
 	"github.com/mikhailsoldatkin/platform_common/pkg/db/transaction"
+	"github.com/sony/gobreaker"
 
 	"github.com/mikhailsoldatkin/auth/internal/api/access"
 	"github.com/mikhailsoldatkin/auth/internal/api/auth"
@@ -73,6 +75,31 @@ func (s *serviceProvider) Config() *config.Config {
 	}
 
 	return s.config
+}
+
+func (s *serviceProvider) RateLimiter(ctx context.Context) *rate_limiter.TokenBucketLimiter {
+	return rate_limiter.NewTokenBucketLimiter(
+		ctx,
+		s.Config().RateLimiter.RequestsLimit,
+		s.Config().RateLimiter.LimitInterval,
+	)
+}
+
+func (s *serviceProvider) CircuitBreaker() *gobreaker.CircuitBreaker {
+	return gobreaker.NewCircuitBreaker(
+		gobreaker.Settings{
+			Name:        s.Config().AppName,
+			MaxRequests: s.Config().CircuitBreaker.MaxRequests,
+			Timeout:     s.Config().CircuitBreaker.Timeout,
+			ReadyToTrip: func(counts gobreaker.Counts) bool {
+				failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
+				return failureRatio >= s.Config().CircuitBreaker.FailureRatio
+			},
+			OnStateChange: func(name string, from gobreaker.State, to gobreaker.State) {
+				log.Printf("Circuit Breaker: %s, changed from %v, to %v\n", name, from, to)
+			},
+		},
+	)
 }
 
 func (s *serviceProvider) DBClient(ctx context.Context) db.Client {

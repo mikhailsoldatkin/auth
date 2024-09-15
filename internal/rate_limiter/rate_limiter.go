@@ -17,13 +17,8 @@ type TokenBucketLimiter struct {
 // at regular intervals based on the period divided by the limit.
 //
 // Parameters:
-//   - ctx: A context to control the lifecycle of the limiter (e.g., to stop replenishment).
 //   - limit: The maximum number of tokens (i.e., allowed operations) in a period.
 //   - period: The time period within which the limit applies.
-//
-// Returns:
-//
-//	A pointer to the created TokenBucketLimiter.
 func NewTokenBucketLimiter(ctx context.Context, limit int, period time.Duration) *TokenBucketLimiter {
 	limiter := &TokenBucketLimiter{
 		tokenBucketCh: make(chan struct{}, limit),
@@ -43,7 +38,6 @@ func NewTokenBucketLimiter(ctx context.Context, limit int, period time.Duration)
 // at the calculated interval until the context is canceled.
 //
 // Parameters:
-//   - ctx: A context to control when to stop the replenishment process.
 //   - interval: The time between each token replenishment.
 func (l *TokenBucketLimiter) startPeriodicReplenishment(ctx context.Context, interval time.Duration) {
 	ticker := time.NewTicker(interval)

@@ -15,7 +15,6 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/mikhailsoldatkin/auth/internal/logger"
 	"github.com/mikhailsoldatkin/auth/internal/metric"
-	"github.com/mikhailsoldatkin/auth/internal/rate_limiter"
 	"github.com/natefinch/lumberjack"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
@@ -152,10 +151,10 @@ func (a *App) initDeps(ctx context.Context) error {
 	inits := []func(context.Context) error{
 		a.initConfig,
 		a.initServiceProvider,
+		a.initLogger,
 		a.initGRPCServer,
 		a.initHTTPServer,
 		a.initSwaggerServer,
-		a.initLogger,
 		a.initMetric,
 		a.initPrometheusServer,
 	}
@@ -194,17 +193,15 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 		logger.Fatal("failed to load TLS credentials from files:", zap.Error(err))
 	}
 
-	rateLimiter := rate_limiter.NewTokenBucketLimiter(
-		ctx,
-		a.serviceProvider.Config().RateLimiter.RequestsLimit,
-		a.serviceProvider.Config().RateLimiter.LimitInterval,
-	)
+	rateLimiter := a.serviceProvider.RateLimiter(ctx)
+	circuitBreaker := a.serviceProvider.CircuitBreaker()
 
 	a.grpcServer = grpc.NewServer(
 		grpc.Creds(creds),
 		grpc.UnaryInterceptor(
 			grpcMiddleware.ChainUnaryServer(
 				interceptor.NewRateLimiterInterceptor(rateLimiter).Unary,
+				interceptor.NewCircuitBreakerInterceptor(circuitBreaker).Unary,
 				interceptor.MetricsInterceptor,
 				interceptor.LoggingInterceptor,
 				interceptor.ValidateInterceptor,
@@ -388,7 +385,7 @@ func serveSwaggerFile(path string) http.HandlerFunc {
 // initLogger initializes the app logger.
 func (a *App) initLogger(_ context.Context) error {
 	var level zapcore.Level
-	if err := level.Set(a.serviceProvider.config.Logger.Level); err != nil {
+	if err := level.Set(a.serviceProvider.Config().Logger.Level); err != nil {
 		return err
 	}
 

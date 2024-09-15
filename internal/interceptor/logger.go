@@ -13,7 +13,7 @@ import (
 // LoggingInterceptor is a gRPC unary server interceptor for logging requests.
 func LoggingInterceptor(
 	ctx context.Context,
-	req interface{},
+	req any,
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler,
 ) (any, error) {
