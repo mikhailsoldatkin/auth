@@ -71,6 +71,8 @@ env:
   LOG_MAX_BACKUPS: 3
   LOG_MAX_AGE_DAYS: 7
 
+  REQUESTS_LIMIT: 100
+
 jobs:
   build-and-test:
     name: Build and test
@@ -188,6 +190,8 @@ jobs:
           echo LOG_MAX_SIZE_MB=${{ env.LOG_MAX_SIZE_MB }} >> .env
           echo LOG_MAX_BACKUPS=${{ env.LOG_MAX_BACKUPS }} >> .env
           echo LOG_MAX_AGE_DAYS=${{ env.LOG_MAX_AGE_DAYS }} >> .env
+          
+          echo REQUESTS_LIMIT=${{ env.REQUESTS_LIMIT }} >> .env
 
       - name: Upload .env file as artifact
         uses: actions/upload-artifact@v4.3.4

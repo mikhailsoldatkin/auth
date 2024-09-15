@@ -15,6 +15,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/mikhailsoldatkin/auth/internal/logger"
 	"github.com/mikhailsoldatkin/auth/internal/metric"
+	"github.com/mikhailsoldatkin/auth/internal/rate_limiter"
 	"github.com/natefinch/lumberjack"
 	"github.com/rakyll/statik/fs"
 	"github.com/rs/cors"
@@ -193,10 +194,17 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 		logger.Fatal("failed to load TLS credentials from files:", zap.Error(err))
 	}
 
+	rateLimiter := rate_limiter.NewTokenBucketLimiter(
+		ctx,
+		a.serviceProvider.Config().RateLimiter.RequestsLimit,
+		a.serviceProvider.Config().RateLimiter.LimitInterval,
+	)
+
 	a.grpcServer = grpc.NewServer(
 		grpc.Creds(creds),
 		grpc.UnaryInterceptor(
 			grpcMiddleware.ChainUnaryServer(
+				interceptor.NewRateLimiterInterceptor(rateLimiter).Unary,
 				interceptor.MetricsInterceptor,
 				interceptor.LoggingInterceptor,
 				interceptor.ValidateInterceptor,

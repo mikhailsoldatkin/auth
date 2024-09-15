@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/IBM/sarama"
 	"github.com/ilyakaznacheev/cleanenv"
@@ -84,6 +85,12 @@ type Prometheus struct {
 	Address string `env:"-"`
 }
 
+// RateLimiter represents configuration for rate limiter.
+type RateLimiter struct {
+	RequestsLimit int           `env:"REQUESTS_LIMIT" env-required:"true"`
+	LimitInterval time.Duration `env:"LIMIT_INTERVAL" env-default:"1s"`
+}
+
 // Config represents the overall application configuration.
 type Config struct {
 	DB            DB
@@ -95,6 +102,7 @@ type Config struct {
 	Auth          Auth
 	Logger        Logger
 	Prometheus    Prometheus
+	RateLimiter   RateLimiter
 }
 
 // Load reads configuration from .env file.

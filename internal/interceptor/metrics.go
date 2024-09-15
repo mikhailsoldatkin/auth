@@ -10,7 +10,12 @@ import (
 )
 
 // MetricsInterceptor is a gRPC unary interceptor that measures request and response metrics.
-func MetricsInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func MetricsInterceptor(
+	ctx context.Context,
+	req any,
+	info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler,
+) (any, error) {
 	metric.IncRequestCounter()
 
 	timeStart := time.Now()
