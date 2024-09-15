@@ -68,6 +68,22 @@ type Auth struct {
 	AccessTokenExpirationMin  int    `env:"ACCESS_TOKEN_EXPIRATION_MIN" env-required:"true"`
 }
 
+// Logger represents configuration for logger.
+type Logger struct {
+	Level      string `env:"LOG_LEVEL" env-required:"true"`
+	Filename   string `env:"LOG_FILENAME" env-required:"true"`
+	MaxSizeMB  int    `env:"LOG_MAX_SIZE_MB" env-required:"true"`
+	MaxBackups int    `env:"LOG_MAX_BACKUPS" env-required:"true"`
+	MaxAgeDays int    `env:"LOG_MAX_AGE_DAYS" env-required:"true"`
+}
+
+// Prometheus represents configuration for prometheus server.
+type Prometheus struct {
+	Port    int    `env:"PROMETHEUS_PORT" env-required:"true"`
+	Host    string `env:"PROMETHEUS_HOST" env-required:"true"`
+	Address string `env:"-"`
+}
+
 // Config represents the overall application configuration.
 type Config struct {
 	DB            DB
@@ -77,6 +93,8 @@ type Config struct {
 	Swagger       Swagger
 	KafkaConsumer KafkaConsumer
 	Auth          Auth
+	Logger        Logger
+	Prometheus    Prometheus
 }
 
 // Load reads configuration from .env file.
@@ -107,6 +125,7 @@ func Load() (*Config, error) {
 	cfg.GRPC.Address = fmt.Sprintf("%s:%d", cfg.GRPC.Host, cfg.GRPC.Port)
 	cfg.HTTP.Address = fmt.Sprintf("%s:%d", cfg.HTTP.Host, cfg.HTTP.Port)
 	cfg.Swagger.Address = fmt.Sprintf("%s:%d", cfg.Swagger.Host, cfg.Swagger.Port)
+	cfg.Prometheus.Address = fmt.Sprintf("%s:%d", cfg.Prometheus.Host, cfg.Prometheus.Port)
 
 	kafkaConfig := sarama.NewConfig()
 	kafkaConfig.Version = sarama.V3_6_0_0

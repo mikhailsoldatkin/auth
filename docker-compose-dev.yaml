@@ -8,6 +8,7 @@ services:
       - ${GRPC_PORT}:${GRPC_PORT}
       - ${HTTP_PORT}:${HTTP_PORT}
       - ${SWAGGER_PORT}:${SWAGGER_PORT}
+      - ${PROMETHEUS_PORT}:${PROMETHEUS_PORT}
     env_file:
       - .env
     networks:
@@ -150,9 +151,37 @@ services:
     networks:
       - internal_network
 
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./alerts.yml:/etc/prometheus/alerts.yml
+      - prometheus_data:/prometheus
+    networks:
+      - internal_network
+    depends_on:
+      app:
+        condition: service_started
+
+  grafana:
+    image: grafana/grafana-oss:11.2.0
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - internal_network
+    depends_on:
+      prometheus:
+        condition: service_started
+
 volumes:
   pgdata:
   redisdata:
+  prometheus_data:
+  grafana_data:
 
 networks:
   microservices_network:

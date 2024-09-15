@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/IBM/sarama"
+	"github.com/mikhailsoldatkin/auth/internal/logger"
 )
 
 // Handler is a function type that processes Kafka messages.
@@ -23,7 +24,7 @@ func NewGroupHandler() *GroupHandler {
 // Setup is called at the beginning of a new session before ConsumeClaim.
 // It is used to set up any state needed for processing.
 func (c *GroupHandler) Setup(sarama.ConsumerGroupSession) error {
-	log.Println("Kafka consumer group session setup")
+	logger.Info("Kafka consumer group session setup")
 	return nil
 }
 
