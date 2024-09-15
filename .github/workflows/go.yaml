@@ -73,6 +73,10 @@ env:
 
   REQUESTS_LIMIT: 100
 
+  CB_MAX_REQUESTS: 3
+  CB_TIMEOUT_SEC: 5s
+  CB_FAILURE_RATIO: 0.6
+
 jobs:
   build-and-test:
     name: Build and test
@@ -192,6 +196,10 @@ jobs:
           echo LOG_MAX_AGE_DAYS=${{ env.LOG_MAX_AGE_DAYS }} >> .env
           
           echo REQUESTS_LIMIT=${{ env.REQUESTS_LIMIT }} >> .env
+          
+          echo CB_MAX_REQUESTS=${{ env.CB_MAX_REQUESTS }} >> .env
+          echo CB_TIMEOUT_SEC=${{ env.CB_TIMEOUT_SEC }} >> .env
+          echo CB_FAILURE_RATIO=${{ env.CB_FAILURE_RATIO }} >> .env
 
       - name: Upload .env file as artifact
         uses: actions/upload-artifact@v4.3.4
